@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { Location } from '@/lib/types'
 
 interface Props {
@@ -19,7 +19,6 @@ export default function RouteMap({ pickup, dropoff }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstanceRef = useRef<any>(null)
   const initializingRef = useRef(false)
-  const [routeInfo, setRouteInfo] = useState<{ distance_km: number; duration_min: number } | null>(null)
 
   useEffect(() => {
     if (!mapRef.current) return
@@ -73,15 +72,48 @@ export default function RouteMap({ pickup, dropoff }: Props) {
       try {
         const { getRoute } = await import('@/lib/osrm')
         const result = await getRoute(pickup, dropoff)
-        if (result.geometry && mapInstanceRef.current) {
-          mapInstanceRef.current.L.geoJSON(result.geometry, {
+        if (!mapInstanceRef.current) return
+
+        if (result.geometry) {
+          L.geoJSON(result.geometry, {
             style: { color: '#D81F26', weight: 3, opacity: 0.7, lineJoin: 'round', lineCap: 'round' },
           }).addTo(map)
         }
-        setRouteInfo({
-          distance_km: result.distance_km,
-          duration_min: Math.max(1, Math.round(result.duration_seconds / 60)),
+
+        const dur = Math.max(1, Math.round(result.duration_seconds / 60))
+        const fmtDur = dur >= 60
+          ? `${Math.floor(dur / 60)}h${dur % 60 > 0 ? `&nbsp;${dur % 60}min` : ''}`
+          : `${dur}&nbsp;min`
+
+        const InfoControl = L.Control.extend({
+          onAdd() {
+            const div = L.DomUtil.create('div')
+            div.setAttribute('style', [
+              'background:rgba(255,255,255,0.95)',
+              'backdrop-filter:blur(6px)',
+              'border-radius:8px',
+              'padding:4px 10px',
+              'display:flex',
+              'gap:8px',
+              'align-items:center',
+              'font-size:11px',
+              'font-weight:700',
+              'color:#0D0D0F',
+              'box-shadow:0 2px 8px rgba(0,0,0,0.16)',
+              'border:1px solid rgba(0,0,0,0.07)',
+              'pointer-events:none',
+              'margin:6px',
+            ].join(';'))
+            div.innerHTML =
+              `<span>📏&nbsp;${result.distance_km}&nbsp;km</span>` +
+              `<span style="width:1px;height:12px;background:#E5E7EB;display:inline-block"></span>` +
+              `<span>⏱&nbsp;${fmtDur}</span>`
+            return div
+          },
+          onRemove() {},
         })
+
+        new InfoControl({ position: 'bottomleft' }).addTo(map)
       } catch { /* silent — markers remain visible */ }
     }
 
@@ -98,26 +130,12 @@ export default function RouteMap({ pickup, dropoff }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fmtDuration = (min: number) =>
-    min >= 60 ? `${Math.floor(min / 60)}h${min % 60 > 0 ? ` ${min % 60}min` : ''}` : `${min} min`
-
   return (
-    <div className="flex flex-col gap-0">
-      <div
-        ref={mapRef}
-        className="w-full rounded-t-xl overflow-hidden border border-b-0 border-gray-200"
-        style={{ height: '140px' }}
-        aria-label={`Trajet : ${pickup.label} → ${dropoff.label}`}
-      />
-      {routeInfo ? (
-        <div className="flex items-center justify-center gap-3 bg-gray-50 border border-gray-200 rounded-b-xl px-3 py-1.5">
-          <span className="text-xs font-semibold text-brand-black">📏 {routeInfo.distance_km} km</span>
-          <span className="w-px h-3 bg-gray-300" />
-          <span className="text-xs font-semibold text-brand-black">⏱ {fmtDuration(routeInfo.duration_min)}</span>
-        </div>
-      ) : (
-        <div className="h-7 bg-gray-50 border border-gray-200 rounded-b-xl animate-pulse" />
-      )}
-    </div>
+    <div
+      ref={mapRef}
+      className="w-full rounded-xl overflow-hidden border border-gray-200"
+      style={{ height: '140px' }}
+      aria-label={`Trajet : ${pickup.label} → ${dropoff.label}`}
+    />
   )
 }

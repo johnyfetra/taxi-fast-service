@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { Location } from '@/lib/types'
 
 interface Props {
@@ -30,7 +30,8 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   const dropoffMarkerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const routeLayerRef = useRef<any>(null)
-  const [routeInfo, setRouteInfo] = useState<{ distance_km: number; duration_min: number } | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const routeControlRef = useRef<any>(null)
   // Guard synchrone pour React StrictMode (double-invocation des effects en dev)
   const initializingRef = useRef(false)
 
@@ -169,13 +170,16 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dropoff])
 
-  // Draw route polyline when both pickup and dropoff are set
+  // Draw route polyline + floating info badge when both pickup and dropoff are set
   useEffect(() => {
     if (routeLayerRef.current) {
       routeLayerRef.current.remove()
       routeLayerRef.current = null
     }
-    setRouteInfo(null)
+    if (routeControlRef.current) {
+      routeControlRef.current.remove()
+      routeControlRef.current = null
+    }
     if (!pickup || !dropoff) return
 
     const drawRoute = async () => {
@@ -185,46 +189,59 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       if (!instance) return
 
       if (result.geometry) {
-        const layer = instance.L.geoJSON(result.geometry, {
+        routeLayerRef.current = instance.L.geoJSON(result.geometry, {
           style: { color: '#D81F26', weight: 4, opacity: 0.7, lineJoin: 'round', lineCap: 'round' },
         }).addTo(instance.map)
-        routeLayerRef.current = layer
       }
 
-      setRouteInfo({
-        distance_km: result.distance_km,
-        duration_min: Math.max(1, Math.round(result.duration_seconds / 60)),
+      const dur = Math.max(1, Math.round(result.duration_seconds / 60))
+      const fmtDur = dur >= 60
+        ? `${Math.floor(dur / 60)}h${dur % 60 > 0 ? `&nbsp;${dur % 60}min` : ''}`
+        : `${dur}&nbsp;min`
+
+      const InfoControl = instance.L.Control.extend({
+        onAdd() {
+          const div = instance.L.DomUtil.create('div')
+          div.setAttribute('style', [
+            'background:rgba(255,255,255,0.95)',
+            'backdrop-filter:blur(6px)',
+            'border-radius:10px',
+            'padding:5px 12px',
+            'display:flex',
+            'gap:10px',
+            'align-items:center',
+            'font-size:13px',
+            'font-weight:700',
+            'color:#0D0D0F',
+            'box-shadow:0 2px 10px rgba(0,0,0,0.18)',
+            'border:1px solid rgba(0,0,0,0.07)',
+            'pointer-events:none',
+            'margin:8px',
+          ].join(';'))
+          div.innerHTML =
+            `<span>📏&nbsp;${result.distance_km}&nbsp;km</span>` +
+            `<span style="width:1px;height:14px;background:#E5E7EB;display:inline-block"></span>` +
+            `<span>⏱&nbsp;${fmtDur}</span>`
+          return div
+        },
+        onRemove() {},
       })
+
+      const control = new InfoControl({ position: 'bottomleft' })
+      control.addTo(instance.map)
+      routeControlRef.current = control
     }
 
     drawRoute()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pickup?.lat, pickup?.lng, dropoff?.lat, dropoff?.lng])
 
-  const fmtDuration = (min: number) =>
-    min >= 60 ? `${Math.floor(min / 60)}h${min % 60 > 0 ? ` ${min % 60}min` : ''}` : `${min} min`
-
   return (
-    <div className="flex flex-col gap-0">
-      <div
-        ref={mapRef}
-        className="w-full rounded-t-2xl overflow-hidden border border-gray-200 shadow-sm"
-        style={{ height: '240px' }}
-        aria-label="Carte de la course"
-      />
-      {routeInfo && (
-        <div className="flex items-center justify-center gap-4 bg-white border border-t-0 border-gray-200 rounded-b-2xl px-4 py-2">
-          <span className="flex items-center gap-1.5 text-sm font-semibold text-brand-black">
-            <span className="text-base">📏</span>
-            {routeInfo.distance_km} km
-          </span>
-          <span className="w-px h-4 bg-gray-200" />
-          <span className="flex items-center gap-1.5 text-sm font-semibold text-brand-black">
-            <span className="text-base">⏱</span>
-            {fmtDuration(routeInfo.duration_min)}
-          </span>
-        </div>
-      )}
-    </div>
+    <div
+      ref={mapRef}
+      className="w-full rounded-2xl overflow-hidden border border-gray-200 shadow-sm"
+      style={{ height: '240px' }}
+      aria-label="Carte de la course"
+    />
   )
 }
