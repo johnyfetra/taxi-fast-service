@@ -1,7 +1,10 @@
 'use client'
+import dynamic from 'next/dynamic'
 import Badge from '@/components/ui/Badge'
 import { IconPhone, IconWhatsApp } from '@/components/icons'
 import type { Order, OrderStatus } from '@/lib/types'
+
+const RouteMap = dynamic(() => import('./RouteMap'), { ssr: false })
 
 interface Props {
   order: Order
@@ -83,8 +86,8 @@ export default function OrderCard({ order, onStatusChange }: Props) {
         <p className="text-sm text-gray-500">Prix sur devis</p>
       )}
 
-      {/* Adresses */}
-      <div className="flex flex-col gap-1 text-sm">
+      {/* Adresses + carte du trajet */}
+      <div className="flex flex-col gap-2 text-sm">
         {order.pickup && (
           <div className="flex items-start gap-1.5 text-gray-700">
             <span className="w-2 h-2 rounded-full bg-brand-red mt-1 flex-shrink-0" />
@@ -96,6 +99,9 @@ export default function OrderCard({ order, onStatusChange }: Props) {
             <span className="w-2 h-2 rounded-full bg-blue-500 mt-1 flex-shrink-0" />
             {order.dropoff.label}
           </div>
+        )}
+        {order.pickup && order.dropoff && order.service !== 'courses' && (
+          <RouteMap pickup={order.pickup} dropoff={order.dropoff} />
         )}
       </div>
 

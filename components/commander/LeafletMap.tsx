@@ -28,6 +28,8 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   const pickupMarkerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dropoffMarkerRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const routeLayerRef = useRef<any>(null)
   // Guard synchrone pour React StrictMode (double-invocation des effects en dev)
   const initializingRef = useRef(false)
 
@@ -165,6 +167,30 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dropoff])
+
+  // Draw route polyline when both pickup and dropoff are set
+  useEffect(() => {
+    if (routeLayerRef.current) {
+      routeLayerRef.current.remove()
+      routeLayerRef.current = null
+    }
+    if (!pickup || !dropoff) return
+
+    const drawRoute = async () => {
+      const { getRoute } = await import('@/lib/osrm')
+      const result = await getRoute(pickup, dropoff)
+      const instance = mapInstanceRef.current
+      if (!result.geometry || !instance) return
+
+      const layer = instance.L.geoJSON(result.geometry, {
+        style: { color: '#D81F26', weight: 4, opacity: 0.7, lineJoin: 'round', lineCap: 'round' },
+      }).addTo(instance.map)
+      routeLayerRef.current = layer
+    }
+
+    drawRoute()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickup?.lat, pickup?.lng, dropoff?.lat, dropoff?.lng])
 
   return (
     <div

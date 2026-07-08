@@ -1,4 +1,4 @@
-import type { Coords } from './types'
+import type { Coords, GeoJsonLineString } from './types'
 import { fallbackRoute } from './geo'
 
 const OSRM_BASE = 'https://router.project-osrm.org'
@@ -8,6 +8,7 @@ export interface RouteResult {
   distance_km: number
   duration_seconds: number
   fallback: boolean
+  geometry: GeoJsonLineString | null
 }
 
 export async function getRoute(origin: Coords, destination: Coords): Promise<RouteResult> {
@@ -15,7 +16,7 @@ export async function getRoute(origin: Coords, destination: Coords): Promise<Rou
   const url =
     `${OSRM_BASE}/route/v1/driving/` +
     `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` +
-    `?overview=false`
+    `?overview=full&geometries=geojson`
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
@@ -34,6 +35,7 @@ export async function getRoute(origin: Coords, destination: Coords): Promise<Rou
       distance_km: Math.round((route.distance / 1000) * 10) / 10,
       duration_seconds: Math.round(route.duration),
       fallback: false,
+      geometry: (route.geometry as GeoJsonLineString) ?? null,
     }
   } catch (err) {
     clearTimeout(timer)
@@ -43,6 +45,7 @@ export async function getRoute(origin: Coords, destination: Coords): Promise<Rou
       distance_km: fb.distance_km,
       duration_seconds: (fb.duration_min / 1.5) * 60,
       fallback: true,
+      geometry: null,
     }
   }
 }
