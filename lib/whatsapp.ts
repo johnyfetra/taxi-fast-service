@@ -1,5 +1,37 @@
 const WA_BASE = 'https://graph.facebook.com/v19.0'
 
+function toWAPhone(phone: string): string {
+  const cleaned = phone.replace(/\s/g, '')
+  if (cleaned.startsWith('+261')) return cleaned.slice(1)
+  if (cleaned.startsWith('261'))  return cleaned
+  if (cleaned.startsWith('0'))    return '261' + cleaned.slice(1)
+  return cleaned
+}
+
+async function sendWAText(to: string, message: string): Promise<void> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
+  const token = process.env.WHATSAPP_TOKEN
+  if (!phoneNumberId || !token) return
+
+  const res = await fetch(`${WA_BASE}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to: toWAPhone(to),
+      type: 'text',
+      text: { body: message },
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    console.error(`[whatsapp] send failed to ${to}:`, err)
+  }
+}
+
+// ── Admin notifications ────────────────────────────────────────────────────
+
 export interface OrderNotificationData {
   id: string
   service: string
@@ -14,57 +46,34 @@ export interface OrderNotificationData {
 }
 
 export async function notifyAdmin(order: OrderNotificationData): Promise<void> {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
-  const token = process.env.WHATSAPP_TOKEN
   const recipient = process.env.WHATSAPP_RECIPIENT_NUMBER
+  if (!recipient) { console.warn('[whatsapp] WHATSAPP_RECIPIENT_NUMBER manquant'); return }
 
-  if (!phoneNumberId || !token || !recipient) {
-    console.warn('[whatsapp] Env vars manquantes, notification ignorée')
-    return
-  }
+  const svc = order.service.toUpperCase()
+  const price = order.priceOffered ? `${order.priceOffered.toLocaleString('fr-MG')} Ar` : 'N/A'
+  const dist = order.distanceKm ? `${order.distanceKm} km` : ''
 
-  const counterLine =
-    order.counterOffer != null
-      ? `Contre-offre client : ${order.counterOffer.toLocaleString('fr-MG')} Ar`
-      : `Tarif accepté : ${(order.priceOffered ?? 0).toLocaleString('fr-MG')} Ar`
+  const lines = [
+    `🆕 NOUVELLE COMMANDE — ${svc}`,
+    `👤 ${order.customerName} · ${order.customerPhone}`,
+    `📍 ${order.pickupLabel}`,
+    order.dropoffLabel ? `🏁 ${order.dropoffLabel}` : null,
+    dist ? `📏 ${dist}` : null,
+    `💰 ${price}`,
+    `🔗 #${order.id.slice(0, 8)}`,
+  ].filter(Boolean).join('\n')
 
-  const body = {
-    messaging_product: 'whatsapp',
-    to: recipient,
-    type: 'template',
-    template: {
-      name: 'nouvelle_commande',
-      language: { code: 'fr' },
-      components: [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', text: order.service.toUpperCase() },
-            { type: 'text', text: order.customerName },
-            { type: 'text', text: order.customerPhone },
-            { type: 'text', text: order.pickupLabel },
-            { type: 'text', text: order.dropoffLabel || 'N/A' },
-            { type: 'text', text: order.distanceKm?.toString() ?? 'N/A' },
-            { type: 'text', text: order.durationMin?.toString() ?? 'N/A' },
-            { type: 'text', text: (order.priceOffered ?? 0).toLocaleString('fr-MG') },
-            { type: 'text', text: counterLine },
-          ],
-        },
-      ],
-    },
-  }
+  await sendWAText(recipient, lines).catch(e => console.error('[whatsapp] notifyAdmin:', e))
+}
 
-  const res = await fetch(`${WA_BASE}/${phoneNumberId}/messages`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
+export async function notifyAdminEvent(message: string): Promise<void> {
+  const recipient = process.env.WHATSAPP_RECIPIENT_NUMBER
+  if (!recipient) return
+  await sendWAText(recipient, message).catch(e => console.error('[whatsapp] notifyAdminEvent:', e))
+}
 
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`WhatsApp API ${res.status}: ${err}`)
-  }
+// ── Client notifications ───────────────────────────────────────────────────
+
+export async function notifyClient(phone: string, message: string): Promise<void> {
+  await sendWAText(phone, message).catch(e => console.error('[whatsapp] notifyClient:', e))
 }
