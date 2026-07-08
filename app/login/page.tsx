@@ -148,7 +148,7 @@ export default function LoginPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Mot de passe / PIN / Code</label>
+            <label className="text-sm font-medium text-gray-700">Mot de passe</label>
             <div className="relative">
               <input
                 type={showPwd ? 'text' : 'password'}
@@ -167,9 +167,6 @@ export default function LoginPage() {
                 <EyeIcon open={showPwd} />
               </button>
             </div>
-            <p className="text-[11px] text-gray-400">
-              Conducteurs : PIN · Clients : code de suivi · Admin : mot de passe
-            </p>
           </div>
 
           <button
