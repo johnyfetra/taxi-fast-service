@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import { IconMoto, IconPackage, IconShopping, IconPhone, IconWhatsApp, IconArrow } from '@/components/icons'
+import { LogoMark } from '@/components/Logo'
 
 export const metadata: Metadata = {
   title: 'Taxi Fast Service — Taxi-moto & Livraison à Antananarivo',
@@ -46,7 +46,7 @@ export default function LandingPage() {
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Taxi Fast Service" width={32} height={32} className="object-contain" priority />
+            <LogoMark size={30} />
             <span className="font-black text-brand-black text-sm" style={{ letterSpacing: '-0.02em' }}>
               Taxi Fast Service
             </span>
@@ -63,7 +63,7 @@ export default function LandingPage() {
 
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="bg-white flex flex-col items-center text-center px-5 pt-12 pb-14">
-        <Image src="/logo.png" alt="Taxi Fast Service" width={100} height={100} className="object-contain mb-8" priority />
+        <LogoMark size={72} className="mb-8" />
 
         {/* Headline */}
         <h1
@@ -79,7 +79,7 @@ export default function LandingPage() {
           className="text-gray-500 mt-5 mx-auto"
           style={{ fontSize: '15px', lineHeight: '1.7', maxWidth: '280px' }}
         >
-          Prix transparent dès la commande —<br />
+          Prix transparent dès la commande,<br />
           <span className="font-medium text-gray-700">confirmé par appel ou WhatsApp.</span>
         </p>
 
@@ -218,7 +218,7 @@ export default function LandingPage() {
       {/* ── FOOTER ──────────────────────────────────────── */}
       <footer className="px-5 py-10" style={{ background: '#0D0D0F' }}>
         <div className="max-w-2xl mx-auto flex flex-col items-center gap-5 text-center">
-          <Image src="/logo.png" alt="Taxi Fast Service" width={36} height={36} className="object-contain opacity-50" />
+          <LogoMark size={36} className="opacity-50" />
 
           <div className="flex items-center gap-6">
             <a
