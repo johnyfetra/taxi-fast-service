@@ -26,10 +26,10 @@ function VehicleModal({ vehicle, onClose, onSave }: {
   })
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-t-3xl w-full max-w-2xl mx-auto flex flex-col"
-        style={{ maxHeight: '85dvh' }}
+        className="bg-white rounded-2xl w-full max-w-md flex flex-col"
+        style={{ maxHeight: '90vh' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header — toujours visible */}
@@ -61,7 +61,7 @@ function VehicleModal({ vehicle, onClose, onSave }: {
         </div>
 
         {/* Bouton — toujours visible en bas */}
-        <div className="px-4 pt-2 pb-6 flex-shrink-0 border-t border-gray-100">
+        <div className="px-4 pt-2 pb-4 flex-shrink-0 border-t border-gray-100">
           <button
             onClick={() => { if (form.label?.trim()) { onSave(form); onClose() } }}
             disabled={!form.label?.trim()}

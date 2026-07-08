@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Location } from '@/lib/types'
 
 interface Props {
@@ -19,6 +19,7 @@ export default function RouteMap({ pickup, dropoff }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstanceRef = useRef<any>(null)
   const initializingRef = useRef(false)
+  const [routeInfo, setRouteInfo] = useState<{ distance_km: number | null; duration_min: number } | null>(null)
 
   useEffect(() => {
     if (!mapRef.current) return
@@ -104,10 +105,12 @@ export default function RouteMap({ pickup, dropoff }: Props) {
               'pointer-events:none',
               'margin:6px',
             ].join(';'))
+            const distIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D81F26" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15"/><circle cx="18" cy="5" r="3"/></svg>`
+            const clockIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D81F26" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 15.5"/></svg>`
             div.innerHTML =
-              `<span>📏&nbsp;${result.distance_km}&nbsp;km</span>` +
+              `<span style="display:inline-flex;align-items:center;gap:4px">${distIcon}&nbsp;${result.distance_km}&nbsp;km</span>` +
               `<span style="width:1px;height:12px;background:#E5E7EB;display:inline-block"></span>` +
-              `<span>⏱&nbsp;${fmtDur}</span>`
+              `<span style="display:inline-flex;align-items:center;gap:4px">${clockIcon}&nbsp;${fmtDur}</span>`
             return div
           },
           onRemove() {},

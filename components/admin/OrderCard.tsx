@@ -33,11 +33,11 @@ export default function OrderCard({ order, onStatusChange }: Props) {
   )
 
   const availableActions = statusActions.filter((a) => {
-    if (order.status === 'done' || order.status === 'cancelled') return false
+    if (['done', 'cancelled', 'client_cancelled'].includes(order.status)) return false
     if (a.next === 'confirmed') return ['client_accepted', 'client_countered'].includes(order.status)
     if (a.next === 'in_progress') return order.status === 'confirmed'
     if (a.next === 'done') return order.status === 'in_progress'
-    if (a.next === 'cancelled') return true // status is already known not to be 'done'/'cancelled'
+    if (a.next === 'cancelled') return true
     return false
   })
 
@@ -105,31 +105,46 @@ export default function OrderCard({ order, onStatusChange }: Props) {
         )}
       </div>
 
-      {/* Client */}
-      <div className="border-t border-gray-100 pt-3 flex items-center justify-between gap-2">
-        <div>
-          <p className="font-semibold text-sm text-brand-black">{order.customer_name}</p>
-          <p className="text-xs text-gray-500">{order.customer_phone}</p>
+      {/* Raison d'annulation */}
+      {order.status === 'client_cancelled' && order.cancellation_reason && (
+        <div className="bg-red-50 border border-red-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D81F26" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0 mt-0.5">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div>
+            <p className="text-[10px] font-semibold text-red-500 uppercase tracking-wider leading-none mb-0.5">Raison du refus</p>
+            <p className="text-xs text-red-800 font-medium">{order.cancellation_reason}</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <a
-            href={`tel:+261${order.customer_phone.replace(/\s/g, '').replace(/^0/, '')}`}
-            className="w-10 h-10 rounded-xl bg-brand-gray border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-brand-black transition-colors"
-            aria-label={`Appeler ${order.customer_name}`}
-          >
-            <IconPhone size={18} />
-          </a>
-          <a
-            href={`https://wa.me/${WA_NUMBER}?text=${waMessage}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-10 h-10 rounded-xl bg-green-50 border border-green-200 flex items-center justify-center text-green-600 hover:bg-green-100 transition-colors"
-            aria-label={`WhatsApp ${order.customer_name}`}
-          >
-            <IconWhatsApp size={18} />
-          </a>
+      )}
+
+      {/* Client — masqué pour les annulations avant contact */}
+      {order.status !== 'client_cancelled' && (
+        <div className="border-t border-gray-100 pt-3 flex items-center justify-between gap-2">
+          <div>
+            <p className="font-semibold text-sm text-brand-black">{order.customer_name}</p>
+            <p className="text-xs text-gray-500">{order.customer_phone}</p>
+          </div>
+          <div className="flex gap-2">
+            <a
+              href={`tel:+261${order.customer_phone.replace(/\s/g, '').replace(/^0/, '')}`}
+              className="w-10 h-10 rounded-xl bg-brand-gray border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-brand-black transition-colors"
+              aria-label={`Appeler ${order.customer_name}`}
+            >
+              <IconPhone size={18} />
+            </a>
+            <a
+              href={`https://wa.me/${WA_NUMBER}?text=${waMessage}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-xl bg-green-50 border border-green-200 flex items-center justify-center text-green-600 hover:bg-green-100 transition-colors"
+              aria-label={`WhatsApp ${order.customer_name}`}
+            >
+              <IconWhatsApp size={18} />
+            </a>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Actions */}
       {availableActions.length > 0 && (

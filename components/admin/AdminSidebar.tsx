@@ -2,16 +2,18 @@
 import { usePathname } from 'next/navigation'
 import {
   IconHome, IconBarChart, IconUsers, IconBike,
-  IconRoute, IconSettings,
+  IconRoute, IconSettings, IconDriver,
 } from '@/components/icons'
 import { LogoMark } from '@/components/Logo'
+import LogoutDialog from '@/components/admin/LogoutDialog'
 
 const NAV = [
-  { href: '/admin',           label: 'Commandes', Icon: IconHome },
-  { href: '/admin/analytics', label: 'Analytics', Icon: IconBarChart },
-  { href: '/admin/clients',   label: 'Clients',   Icon: IconUsers },
-  { href: '/admin/flotte',    label: 'Flotte',    Icon: IconBike },
-  { href: '/admin/tournee',   label: 'Tournée',   Icon: IconRoute },
+  { href: '/admin',             label: 'Commandes',   Icon: IconHome },
+  { href: '/admin/analytics',   label: 'Analytics',   Icon: IconBarChart },
+  { href: '/admin/clients',     label: 'Clients',     Icon: IconUsers },
+  { href: '/admin/conducteurs', label: 'Conducteurs', Icon: IconDriver },
+  { href: '/admin/flotte',      label: 'Flotte',      Icon: IconBike },
+  { href: '/admin/tournee',     label: 'Planning',    Icon: IconRoute },
 ]
 
 export default function AdminSidebar() {
@@ -70,19 +72,7 @@ export default function AdminSidebar() {
           <IconSettings size={18} />
           <span>Tarifs</span>
         </a>
-        <form action="/api/auth/signout" method="post">
-          <button
-            type="submit"
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-white hover:bg-white/8 transition-all text-left"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span>Déconnexion</span>
-          </button>
-        </form>
+        <LogoutDialog variant="sidebar" />
       </div>
     </aside>
   )
