@@ -34,7 +34,7 @@ const services = [
 
 const steps = [
   { n: '01', title: 'Choisissez votre service', desc: 'Taxi-moto, colis ou courses — en quelques secondes.' },
-  { n: '02', title: 'Le prix s\'affiche instantanément', desc: 'Distance, durée et tarif calculés en temps réel. Acceptez ou proposez votre prix.' },
+  { n: '02', title: 'Le prix s\'affiche instantanément', desc: 'Distance, durée et tarif calculés en temps réel. Acceptez pour confirmer votre commande.' },
   { n: '03', title: 'On vous contacte', desc: 'Confirmation par appel ou WhatsApp en quelques minutes.' },
 ]
 
@@ -43,20 +43,17 @@ export default function LandingPage() {
     <main className="flex flex-col min-h-screen">
 
       {/* ── NAV ─────────────────────────────────────────── */}
-      <nav
-        className="sticky top-0 z-40"
-        style={{ background: '#0D0D0F', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
-      >
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Taxi Fast Service" width={30} height={30} className="object-contain" priority />
-            <span className="font-black text-white text-sm" style={{ letterSpacing: '-0.02em' }}>
+            <Image src="/logo.png" alt="Taxi Fast Service" width={32} height={32} className="object-contain" priority />
+            <span className="font-black text-brand-black text-sm" style={{ letterSpacing: '-0.02em' }}>
               Taxi Fast Service
             </span>
           </div>
           <a
             href={TEL}
-            className="flex items-center gap-1.5 text-sm font-semibold text-brand-red hover:text-red-400 transition-colors"
+            className="flex items-center gap-1.5 text-sm font-semibold text-brand-red hover:text-red-700 transition-colors"
           >
             <IconPhone size={14} />
             {TEL_DISPLAY}
@@ -65,60 +62,49 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ────────────────────────────────────────── */}
-      <section
-        className="flex flex-col items-center text-center px-5 pt-14 pb-16"
-        style={{ background: '#0D0D0F' }}
-      >
-        {/* Pill eyebrow */}
-        <div
-          className="flex items-center gap-2 mb-10 px-3.5 py-1.5 rounded-full"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-brand-red" />
-          <span className="text-white/50 font-semibold" style={{ fontSize: '11px', letterSpacing: '0.1em' }}>
-            ANTANANARIVO · MADAGASCAR
-          </span>
-        </div>
+      <section className="bg-white flex flex-col items-center text-center px-5 pt-12 pb-14">
+        <Image src="/logo.png" alt="Taxi Fast Service" width={100} height={100} className="object-contain mb-8" priority />
 
         {/* Headline */}
         <h1
-          className="font-black text-white"
-          style={{ fontSize: 'clamp(44px, 12vw, 64px)', letterSpacing: '-0.04em', lineHeight: '1.04', textWrap: 'balance' }}
+          className="font-black text-brand-black"
+          style={{ fontSize: 'clamp(36px, 10vw, 56px)', letterSpacing: '-0.04em', lineHeight: '1.06', textWrap: 'balance' }}
         >
-          Taxi-moto<br />&amp; livraison
-          <br />
-          <span className="text-brand-red" style={{ fontStyle: 'italic', letterSpacing: '-0.03em' }}>
-            express à Tana
-          </span>
+          Taxi-moto &amp; livraison<br />
+          <span className="text-brand-red" style={{ fontStyle: 'italic' }}>express à Tana</span>
         </h1>
 
         {/* Subtitle */}
         <p
-          className="text-white/45 mt-6 mx-auto"
-          style={{ fontSize: '15px', lineHeight: '1.65', maxWidth: '260px' }}
+          className="text-gray-500 mt-5 mx-auto"
+          style={{ fontSize: '15px', lineHeight: '1.7', maxWidth: '280px' }}
         >
-          Prix transparent dès la commande —
-          confirmé par appel ou WhatsApp.
+          Prix transparent dès la commande —<br />
+          <span className="font-medium text-gray-700">confirmé par appel ou WhatsApp.</span>
         </p>
 
         {/* CTA */}
-        <div className="mt-9 w-full max-w-xs flex flex-col items-center gap-3">
+        <div className="mt-8 w-full max-w-xs flex flex-col items-center gap-4">
           <Link
             href="/commander"
             className="w-full text-white font-bold rounded-2xl py-4 text-center transition-all hover:brightness-110 active:scale-[0.98]"
-            style={{ background: '#D81F26', fontSize: '15px', letterSpacing: '-0.01em', boxShadow: '0 4px 24px rgba(216,31,38,0.35)' }}
+            style={{ background: '#D81F26', fontSize: '15px', letterSpacing: '-0.01em', boxShadow: '0 4px 20px rgba(216,31,38,0.28)' }}
           >
             Commander maintenant
           </Link>
 
           {/* Trust chips */}
-          <div className="flex items-center gap-2 flex-wrap justify-center">
-            {['Prix transparent', 'Lun–Ven · 8h–17h'].map((label) => (
+          <div className="flex items-center gap-2">
+            {[
+              { icon: '✓', label: 'Prix transparent' },
+              { icon: '🕐', label: 'Lun–Ven · 8h–17h' },
+            ].map(({ icon, label }) => (
               <span
                 key={label}
-                className="font-medium text-white/35"
-                style={{ fontSize: '12px', letterSpacing: '0.01em' }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-500 font-medium"
+                style={{ fontSize: '12px' }}
               >
+                <span style={{ fontSize: '10px' }}>{icon}</span>
                 {label}
               </span>
             ))}
@@ -146,19 +132,7 @@ export default function LandingPage() {
               <Link
                 key={href}
                 href={href}
-                className="bg-white rounded-2xl p-5 flex items-center gap-4 group transition-all"
-                style={{
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                  border: '1px solid transparent',
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(216,31,38,0.18)'
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.09)'
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'transparent'
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)'
-                }}
+                className="bg-white rounded-2xl p-5 flex items-center gap-4 group transition-all border border-transparent hover:border-red-200 shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)]"
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-[1.05]"
