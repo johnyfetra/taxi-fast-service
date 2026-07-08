@@ -166,5 +166,25 @@ export async function POST(req: NextRequest) {
     console.error('[orders] WhatsApp notification failed (non-fatal):', e)
   }
 
-  return NextResponse.json({ id: order.id })
+  // Upsert customer tracking account (create only if phone not seen before)
+  let access_code: string | null = null
+  try {
+    const { data: existing } = await supabase
+      .from('customer_accounts')
+      .select('access_code')
+      .eq('phone', data.customer_phone)
+      .single()
+    if (existing?.access_code) {
+      access_code = existing.access_code
+    } else {
+      access_code = Math.floor(100000 + Math.random() * 900000).toString()
+      await supabase
+        .from('customer_accounts')
+        .insert({ phone: data.customer_phone, access_code })
+    }
+  } catch (e) {
+    console.error('[orders] customer account upsert failed (non-fatal):', e)
+  }
+
+  return NextResponse.json({ id: order.id, access_code })
 }

@@ -9,20 +9,24 @@ interface PhotonFeatureRaw {
     name?: string
     street?: string
     housenumber?: string
+    district?: string
     city?: string
+    county?: string
     state?: string
     country?: string
     postcode?: string
+    osm_value?: string
   }
   geometry: { coordinates: [number, number] }
 }
 
 function buildLabel(p: PhotonFeatureRaw['properties']): string {
-  const parts = [
-    p.housenumber && p.street ? `${p.housenumber} ${p.street}` : p.street ?? p.name,
-    p.city,
-    p.state,
-  ].filter(Boolean)
+  // Quartier = street name, district, or place name
+  const quartier = (p.housenumber && p.street)
+    ? `${p.housenumber} ${p.street}`
+    : p.street ?? p.district ?? p.name
+
+  const parts = [quartier, p.city ?? p.county, p.state].filter(Boolean)
   return parts.join(', ') || 'Lieu inconnu'
 }
 

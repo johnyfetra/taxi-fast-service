@@ -218,10 +218,12 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
             'pointer-events:none',
             'margin:8px',
           ].join(';'))
+          const routeIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D81F26" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15"/><circle cx="18" cy="5" r="3"/></svg>`
+          const clockIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D81F26" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 15.5"/></svg>`
           div.innerHTML =
-            `<span>📏&nbsp;${result.distance_km}&nbsp;km</span>` +
+            `<span style="display:inline-flex;align-items:center;gap:5px">${routeIcon}&nbsp;${result.distance_km}&nbsp;km</span>` +
             `<span style="width:1px;height:14px;background:#E5E7EB;display:inline-block"></span>` +
-            `<span>⏱&nbsp;${fmtDur}</span>`
+            `<span style="display:inline-flex;align-items:center;gap:5px">${clockIcon}&nbsp;${fmtDur}</span>`
           return div
         },
         onRemove() {},

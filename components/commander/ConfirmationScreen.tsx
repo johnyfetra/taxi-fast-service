@@ -1,5 +1,5 @@
 import Button from '@/components/ui/Button'
-import { IconPhone, IconWhatsApp, IconMapPin, IconCheck } from '@/components/icons'
+import { IconPhone, IconWhatsApp, IconCheck } from '@/components/icons'
 import type { ServiceType, Location } from '@/lib/types'
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   pickup: Location | null
   dropoff: Location | null
   price: number | null
-  counterOffer: number | null
+  accessCode?: string | null
 }
 
 const WA_NUMBER = '261346143066'
@@ -20,8 +20,7 @@ function buildWaMessage(props: Props): string {
   msg += `Service : ${s}\n`
   if (props.pickup) msg += `Depart : ${props.pickup.label}\n`
   if (props.dropoff) msg += `Arrivee : ${props.dropoff.label}\n`
-  if (props.price) msg += `Tarif propose : ${props.price.toLocaleString('fr-MG')} Ar\n`
-  if (props.counterOffer) msg += `Contre-offre : ${props.counterOffer.toLocaleString('fr-MG')} Ar\n`
+  if (props.price) msg += `Tarif : ${props.price.toLocaleString('fr-MG')} Ar\n`
   return encodeURIComponent(msg.trim())
 }
 
@@ -36,7 +35,7 @@ export default function ConfirmationScreen(props: Props) {
 
   return (
     <div className="flex flex-col items-center gap-6 py-8 text-center">
-      {/* Icône succès */}
+      {/* Success icon */}
       <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
         <IconCheck size={28} className="text-green-600" />
       </div>
@@ -47,6 +46,26 @@ export default function ConfirmationScreen(props: Props) {
           On vous contacte dans quelques minutes pour confirmer votre course.
         </p>
       </div>
+
+      {/* Tracking code */}
+      {props.accessCode && (
+        <div className="w-full bg-brand-black rounded-2xl p-5 text-center">
+          <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-2">Code de suivi</p>
+          <p className="text-white text-4xl font-bold tracking-widest tabular-nums mb-3">
+            {props.accessCode}
+          </p>
+          <p className="text-gray-500 text-xs leading-relaxed mb-4">
+            Notez ce code. Il vous permet de suivre vos commandes sur{' '}
+            <span className="text-white font-semibold">taxifastservice.mg/suivi</span>
+          </p>
+          <a
+            href="/suivi"
+            className="inline-flex items-center gap-1.5 bg-brand-red text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors"
+          >
+            Suivre ma commande →
+          </a>
+        </div>
+      )}
 
       {/* Récapitulatif */}
       <div className="bg-brand-gray rounded-2xl p-4 w-full text-left space-y-2.5">
@@ -64,11 +83,7 @@ export default function ConfirmationScreen(props: Props) {
             {props.dropoff.label}
           </div>
         )}
-        {props.counterOffer ? (
-          <p className="text-sm font-semibold text-brand-red">
-            Votre offre : {props.counterOffer.toLocaleString('fr-MG')} Ar
-          </p>
-        ) : props.price ? (
+        {props.price ? (
           <p className="text-sm font-semibold text-brand-black">
             Tarif : {props.price.toLocaleString('fr-MG')} Ar
           </p>

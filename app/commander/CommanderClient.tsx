@@ -9,7 +9,21 @@ import PriceDecision from '@/components/commander/PriceDecision'
 import ContactForm from '@/components/commander/ContactForm'
 import ConfirmationScreen from '@/components/commander/ConfirmationScreen'
 import Button from '@/components/ui/Button'
-import { IconLocation, IconMapPin, IconFlash, IconClock } from '@/components/icons'
+import { IconLocation, IconFlash, IconClock } from '@/components/icons'
+
+function PinIcon({ filled, type }: { filled: boolean; type: 'departure' | 'arrival' }) {
+  const color = !filled
+    ? '#D1D5DB'
+    : type === 'departure'
+    ? '#D81F26'
+    : '#3B82F6'
+  return (
+    <svg width="16" height="20" viewBox="0 0 16 20" fill="none" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8 0 13.25 8 20 8 20S16 13.25 16 8C16 3.58 12.42 0 8 0Z" fill={color} />
+      <circle cx="8" cy="8" r="3" fill="white" />
+    </svg>
+  )
+}
 
 const LeafletMap = dynamic(() => import('@/components/commander/LeafletMap'), {
   ssr: false,
@@ -20,8 +34,8 @@ const LeafletMap = dynamic(() => import('@/components/commander/LeafletMap'), {
   ),
 })
 
-type Step = 'service' | 'addresses' | 'estimate' | 'contact' | 'done'
-type Decision = { type: 'accepted' } | { type: 'counter'; counter_offer: number }
+type Step = 'service' | 'addresses' | 'estimate' | 'contact' | 'done' | 'cancelled'
+type Decision = { type: 'accepted' }
 
 const SIZES = ['petit', 'moyen', 'grand'] as const
 
@@ -67,6 +81,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [orderId, setOrderId] = useState('')
+  const [accessCode, setAccessCode] = useState<string | null>(null)
   const [geolocating, setGeolocating] = useState(false)
 
   const handleGeolocate = useCallback(() => {
@@ -78,14 +93,14 @@ export default function CommanderClient({ initialService }: { initialService?: S
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { lat, lng } = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-        let label = `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+        let label = 'Ma position actuelle'
         try {
           const res = await fetch(`/api/geocode?type=reverse&lat=${lat}&lng=${lng}`)
           if (res.ok) {
             const feat = await res.json()
             if (feat?.label) label = feat.label
           }
-        } catch { /* use coordinate fallback */ }
+        } catch { /* keep friendly fallback */ }
         setPickup({ label, lat, lng, geolocated: true })
         setGeolocating(false)
       },
@@ -127,6 +142,23 @@ export default function CommanderClient({ initialService }: { initialService?: S
     setDecision(d)
     setStep('contact')
   }, [])
+
+  const handleCancel = useCallback(async (reason: string) => {
+    try {
+      await fetch('/api/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service,
+          pickup,
+          dropoff: dropoff ?? undefined,
+          price_offered: estimate?.price ?? null,
+          cancellation_reason: reason,
+        }),
+      })
+    } catch { /* non-fatal */ }
+    setStep('cancelled')
+  }, [service, pickup, dropoff, estimate?.price])
 
   const handleSubmit = useCallback(
     async (name: string, phone: string) => {
@@ -176,6 +208,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
         if (!res.ok) throw new Error('Erreur serveur')
         const data = await res.json()
         setOrderId(data.id)
+        setAccessCode(data.access_code ?? null)
         setStep('done')
       } catch {
         setSubmitError('Erreur lors de l\'envoi. Vérifiez votre connexion et réessayez.')
@@ -239,54 +272,60 @@ export default function CommanderClient({ initialService }: { initialService?: S
             {service === 'taxi' ? 'Votre trajet' : service === 'colis' ? 'Livraison de colis' : 'Votre commande de courses'}
           </h1>
 
-          {/* Départ */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-1.5">
-              <IconMapPin size={15} className="text-brand-red" />
-              <span className="text-sm font-medium text-brand-black">Point de départ</span>
-            </div>
-            <Button
-              variant="secondary"
-              size="md"
-              className="w-full"
-              loading={geolocating}
-              onClick={handleGeolocate}
-              type="button"
-            >
-              <IconLocation size={17} />
-              {geolocating ? 'Détection en cours…' : 'Ma position actuelle'}
-            </Button>
-            <AddressSearch
-              label="Ou rechercher l'adresse"
-              placeholder="Quartier, rue, lieu-dit…"
-              value={pickup}
-              onChange={setPickup}
-            />
-            {pickup && (
-              <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-brand-red inline-block flex-shrink-0" />
-                Départ : {pickup.label}
-              </p>
-            )}
-          </div>
-
-          {/* Arrivée — pas pour courses */}
-          {service !== 'courses' && (
-            <div className="flex flex-col gap-2">
-              <AddressSearch
-                label="Point d'arrivée"
-                placeholder="Rechercher la destination…"
-                value={dropoff}
-                onChange={setDropoff}
-              />
-              {dropoff && (
-                <p className="text-xs text-blue-700 bg-blue-50 rounded-lg px-3 py-2 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 inline-block flex-shrink-0" />
-                  Arrivée : {dropoff.label}
-                </p>
+          {/* Départ + Arrivée avec connecteur visuel */}
+          <div className="flex gap-3 items-stretch">
+            {/* Colonne gauche : pins GPS + tiret discontinu */}
+            <div className="flex flex-col items-center flex-shrink-0 w-4" style={{ paddingTop: '2px' }}>
+              <PinIcon filled={!!pickup} type="departure" />
+              {service !== 'courses' && (
+                <>
+                  <div
+                    className="flex-1 my-1.5"
+                    style={{ width: 0, borderLeft: '2px dashed #D1D5DB', minHeight: 60 }}
+                  />
+                  <PinIcon filled={!!dropoff} type="arrival" />
+                </>
               )}
             </div>
-          )}
+
+            {/* Colonne droite : champs */}
+            <div className="flex flex-col flex-1 min-w-0" style={{ gap: service !== 'courses' ? 20 : 0 }}>
+              {/* Départ */}
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-brand-red">Point de départ</span>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="w-full"
+                  loading={geolocating}
+                  onClick={handleGeolocate}
+                  type="button"
+                >
+                  <IconLocation size={17} />
+                  {geolocating ? 'Détection en cours…' : 'Ma position actuelle'}
+                </Button>
+                <AddressSearch
+                  label="Ou rechercher l'adresse"
+                  placeholder="Quartier, rue, lieu-dit…"
+                  value={pickup}
+                  onChange={setPickup}
+                />
+              </div>
+
+              {/* Arrivée — pas pour courses */}
+              {service !== 'courses' && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-semibold text-blue-500">Point d'arrivée</span>
+                  <AddressSearch
+                    label="Rechercher la destination"
+                    placeholder="Rechercher la destination…"
+                    value={dropoff}
+                    onChange={setDropoff}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Carte — max 40% de la hauteur sur mobile */}
           {(pickup || dropoff) && service !== 'courses' && (
@@ -502,8 +541,72 @@ export default function CommanderClient({ initialService }: { initialService?: S
             ← Modifier les adresses
           </button>
           <h1 className="text-xl font-bold text-brand-black">Votre estimation</h1>
+
+          {/* Récapitulatif trajet */}
+          {pickup && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-4">
+              {/* Départ → Arrivée */}
+              <div className="flex items-stretch gap-3">
+                {/* Timeline */}
+                <div className="flex flex-col items-center pt-0.5 flex-shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-brand-red ring-2 ring-red-100" />
+                  {dropoff && <div className="w-px flex-1 bg-gray-200 my-1.5" />}
+                  {dropoff && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-blue-100" />}
+                </div>
+                {/* Labels */}
+                <div className="flex flex-col flex-1 gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-0.5">Départ</p>
+                    <p className="text-sm font-medium text-brand-black leading-snug line-clamp-2">{pickup.label}</p>
+                  </div>
+                  {dropoff && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-0.5">Arrivée</p>
+                      <p className="text-sm font-medium text-brand-black leading-snug line-clamp-2">{dropoff.label}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Date de récupération — taxi & colis uniquement */}
+              {(service === 'taxi' || service === 'colis') && (
+                <>
+                  <div className="border-t border-gray-100 mt-3.5 mb-3" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-brand-gray flex items-center justify-center flex-shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-0.5">Prise en charge</p>
+                      {pickupSchedule === 'now' ? (
+                        <p className="text-sm font-semibold text-green-600">Maintenant</p>
+                      ) : (
+                        <p className="text-sm font-semibold text-brand-black">
+                          {pickupDatetime
+                            ? new Date(pickupDatetime).toLocaleString('fr-FR', {
+                                weekday: 'short', day: 'numeric', month: 'short',
+                                hour: '2-digit', minute: '2-digit',
+                              })
+                            : '—'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           <EstimateCard estimate={estimate} service={service} />
-          <PriceDecision price={estimate.price} onDecide={handleDecide} />
+          <PriceDecision
+            price={estimate.price}
+            onDecide={handleDecide}
+            onCancel={handleCancel}
+            minPrice={estimate.min_price}
+            pricePerKm={estimate.price_per_km}
+          />
         </div>
       )}
 
@@ -524,6 +627,33 @@ export default function CommanderClient({ initialService }: { initialService?: S
         </div>
       )}
 
+      {/* Annulation enregistrée */}
+      {step === 'cancelled' && (
+        <div className="flex flex-col items-center text-center gap-6 py-8">
+          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-2xl">
+            ✕
+          </div>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-xl font-bold text-brand-black">Commande annulée</h1>
+            <p className="text-sm text-gray-500 max-w-xs mx-auto leading-relaxed">
+              Votre refus a été enregistré. Nous en prenons note pour améliorer notre service.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setStep('service')
+              setPickup(null)
+              setDropoff(null)
+              setEstimate(null)
+              setDecision(null)
+            }}
+            className="w-full max-w-xs bg-brand-black text-white font-semibold rounded-2xl py-3.5 text-sm hover:bg-gray-800 transition-colors"
+          >
+            Nouvelle commande
+          </button>
+        </div>
+      )}
+
       {/* Confirmation */}
       {step === 'done' && service && (
         <ConfirmationScreen
@@ -533,7 +663,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
           pickup={pickup}
           dropoff={dropoff}
           price={estimate?.price ?? null}
-          counterOffer={decision?.type === 'counter' ? decision.counter_offer : null}
+          accessCode={accessCode}
         />
       )}
     </div>

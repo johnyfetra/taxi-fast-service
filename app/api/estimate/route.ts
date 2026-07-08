@@ -80,6 +80,8 @@ export async function POST(req: NextRequest) {
       price: priceResult.price,
       fallback: route.fallback,
       geometry: route.geometry,
+      min_price: rule.min_price,
+      price_per_km: rule.price_per_km,
     })
   } catch (err) {
     console.error('[estimate] unexpected error:', err)
