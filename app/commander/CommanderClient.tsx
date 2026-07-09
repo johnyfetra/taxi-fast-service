@@ -104,11 +104,15 @@ export default function CommanderClient({ initialService }: { initialService?: S
         setPickup({ label, lat, lng, geolocated: true })
         setGeolocating(false)
       },
-      () => {
+      (err) => {
         setGeolocating(false)
-        alert('Impossible de détecter votre position. Veuillez saisir votre adresse manuellement.')
+        if (err.code === 1) {
+          alert('Accès à la position refusé. Autorisez la géolocalisation dans les paramètres de votre navigateur.')
+        } else {
+          alert('Impossible de détecter votre position. Veuillez saisir votre adresse manuellement.')
+        }
       },
-      { timeout: 8000, enableHighAccuracy: true }
+      { timeout: 15000, enableHighAccuracy: false, maximumAge: 60000 }
     )
   }, [])
 
