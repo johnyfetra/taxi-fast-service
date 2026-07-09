@@ -221,7 +221,7 @@ export default function LandingPage() {
       {/* ── FOOTER ──────────────────────────────────────── */}
       <footer className="px-5 py-10 bg-brand-black">
         <div className="max-w-2xl mx-auto flex flex-col items-center gap-5 text-center">
-          <LogoMark size={36} className="opacity-50" />
+          <span className="font-black text-white/40 text-sm tracking-widest uppercase">Taxi Fast Service</span>
 
           <div className="flex items-center gap-6">
             <a
