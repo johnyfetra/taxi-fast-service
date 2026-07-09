@@ -8,7 +8,7 @@ interface LogoMarkProps {
 export function LogoMark({ size = 32, className = '' }: LogoMarkProps) {
   return (
     <Image
-      src="/logo.png"
+      src="/logo-transparent.png"
       alt="Taxi Fast Service"
       width={size}
       height={size}
