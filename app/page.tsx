@@ -67,7 +67,7 @@ export default function LandingPage() {
 
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="bg-white dark:bg-[#141416] flex flex-col items-center text-center px-5 pt-12 pb-14">
-        <div className="mb-6 w-full flex items-center justify-center dark:bg-white dark:rounded-[2rem] dark:py-10 dark:shadow-[0_4px_32px_rgba(0,0,0,0.5)]">
+        <div className="mb-6 w-full flex items-center justify-center dark:bg-white">
           <LogoMark size={200} />
         </div>
 
