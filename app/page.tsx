@@ -47,7 +47,7 @@ export default function LandingPage() {
       <nav className="bg-white dark:bg-[#141416] border-b border-gray-100 dark:border-[#1E1E20] sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <LogoMark size={30} />
+            <LogoMark height={28} />
             <span className="font-black text-brand-black dark:text-white text-sm" style={{ letterSpacing: '-0.02em' }}>
               Taxi Fast Service
             </span>
@@ -67,8 +67,8 @@ export default function LandingPage() {
 
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="bg-white dark:bg-[#141416] flex flex-col items-center text-center px-5 pt-12 pb-14">
-        <div className="mb-6 w-full flex items-center justify-center dark:bg-white">
-          <LogoMark size={200} />
+        <div className="mb-6 w-full flex items-center justify-center py-4 dark:bg-white">
+          <LogoMark height={160} />
         </div>
 
         <h1

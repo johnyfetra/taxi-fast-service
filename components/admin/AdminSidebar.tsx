@@ -44,7 +44,7 @@ export default function AdminSidebar() {
       {/* Logo block */}
       <div className="px-4 py-5 border-b border-white/8">
         <a href="/admin" className="flex items-center gap-3 group">
-          <LogoMark size={38} className="shrink-0 group-hover:opacity-90 transition-opacity" />
+          <LogoMark height={28} className="shrink-0 group-hover:opacity-90 transition-opacity" />
           <div className="leading-tight">
             <p className="text-white font-black text-sm" style={{ letterSpacing: '-0.02em' }}>TAXI FAST</p>
             <p className="text-brand-red font-bold text-xs tracking-widest uppercase">Service</p>
