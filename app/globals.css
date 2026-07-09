@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
+/* class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
+  --background: #F7F7F8;
   --foreground: #0D0D0F;
+  /* semantic theme tokens */
+  --t-surface: #ffffff;
+  --t-surface-raised: #ffffff;
+  --t-bg: #F7F7F8;
+  --t-text: #0D0D0F;
+  --t-muted: #6B7280;
+  --t-border: #E5E7EB;
+  --t-border-faint: #F3F4F6;
+  --t-input: #ffffff;
+}
+
+.dark {
+  --background: #0A0A0B;
+  --foreground: #F7F7F8;
+  --t-surface: #141416;
+  --t-surface-raised: #1C1C1E;
+  --t-bg: #0A0A0B;
+  --t-text: #F7F7F8;
+  --t-muted: #9CA3AF;
+  --t-border: #2A2A2C;
+  --t-border-faint: #1E1E20;
+  --t-input: #1C1C1E;
 }
 
 @theme inline {
@@ -15,12 +40,22 @@
   --color-brand-white: #FFFFFF;
   --color-brand-gray: #F7F7F8;
   --color-brand-gray-dark: #E5E5E7;
+  /* theme-aware tokens */
+  --color-t-surface: var(--t-surface);
+  --color-t-surface-raised: var(--t-surface-raised);
+  --color-t-bg: var(--t-bg);
+  --color-t-text: var(--t-text);
+  --color-t-muted: var(--t-muted);
+  --color-t-border: var(--t-border);
+  --color-t-border-faint: var(--t-border-faint);
+  --color-t-input: var(--t-input);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 *:focus-visible {

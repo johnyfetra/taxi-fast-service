@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import type { Location } from '@/lib/types'
 
 interface GeoResult {
@@ -9,27 +9,34 @@ interface GeoResult {
 }
 
 interface Props {
-  label: string
+  label?: string
   placeholder?: string
   value: Location | null
   onChange: (loc: Location) => void
 }
 
+export interface AddressSearchHandle {
+  focus: () => void
+}
+
 function formatAddress(label: string) {
   const parts = label.split(', ')
   if (parts.length < 2) {
-    return <span className="text-sm text-brand-black truncate">{label}</span>
+    return <span className="text-sm text-brand-black dark:text-white truncate">{label}</span>
   }
-  // parts[0] = quartier précis (bold), parts[1] = ville, parts[2+] = région
   return (
     <span className="text-sm truncate">
-      <strong className="font-semibold text-brand-black">{parts[0]}</strong>
+      {/* Quartier — texte principal, contraste max */}
+      <strong className="font-semibold text-brand-black dark:text-white">{parts[0]}</strong>
       {parts.slice(1).map((part, i) => (
         <span key={i}>
-          <span className="text-gray-300">, </span>
+          {/* Virgule séparateur */}
+          <span className="text-gray-300 dark:text-gray-500">, </span>
           {i === 0
-            ? <span className="text-gray-600">{part}</span>
-            : <span className="text-gray-400">{part}</span>
+            ? /* Ville — contraste AA : gray-600 sur blanc (5.7:1), gray-300 sur #1C1C1E (10.5:1) */
+              <span className="text-gray-600 dark:text-gray-300">{part}</span>
+            : /* Région — contraste AA : gray-400 sur blanc (3.1:1 large), gray-400 sur #1C1C1E (5.8:1) */
+              <span className="text-gray-400 dark:text-gray-400">{part}</span>
           }
         </span>
       ))}
@@ -37,7 +44,10 @@ function formatAddress(label: string) {
   )
 }
 
-export default function AddressSearch({ label, placeholder, value, onChange }: Props) {
+const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSearch(
+  { label, placeholder, value, onChange },
+  ref
+) {
   const [query, setQuery] = useState(value?.label ?? '')
   const [suggestions, setSuggestions] = useState<GeoResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -49,7 +59,16 @@ export default function AddressSearch({ label, placeholder, value, onChange }: P
   const listPointerDownRef = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const listId = `${label.replace(/[\s']/g, '-')}-suggestions`
+  const listId = `addr-${(label ?? 'field').replace(/[\s']/g, '-')}-suggestions`
+
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      setIsFocused(true)
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 50)
+    },
+  }))
 
   // Sync when value changes externally (e.g. geolocation sets pickup from parent)
   useEffect(() => {
@@ -115,7 +134,6 @@ export default function AddressSearch({ label, placeholder, value, onChange }: P
       if (!listPointerDownRef.current) {
         setOpen(false)
         setIsFocused(false)
-        // Reset query to confirmed value so next edit starts from it
         setQuery(value?.label ?? '')
       }
     }, 200)
@@ -125,7 +143,7 @@ export default function AddressSearch({ label, placeholder, value, onChange }: P
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      <label className="block text-xs font-medium text-gray-400 mb-1">{label}</label>
+      {label && <label className="block text-xs font-medium text-gray-400 mb-1">{label}</label>}
 
       <div className="relative">
         {/* Formatted display — shown when a value is confirmed and field is not focused */}
@@ -138,12 +156,12 @@ export default function AddressSearch({ label, placeholder, value, onChange }: P
               inputRef.current?.select()
             }, 0)
           }}
-          className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white cursor-text items-center min-h-12 overflow-hidden"
+          className="w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] cursor-text items-center min-h-[52px] overflow-hidden"
         >
           {value && formatAddress(value.label)}
         </div>
 
-        {/* Real input — shown while searching or no value */}
+        {/* Real input */}
         <input
           ref={inputRef}
           type="text"
@@ -155,13 +173,13 @@ export default function AddressSearch({ label, placeholder, value, onChange }: P
           }}
           onBlur={handleBlur}
           placeholder={placeholder ?? 'Rechercher une adresse…'}
-          aria-label={label}
+          aria-label={label ?? placeholder ?? 'Adresse'}
           aria-controls={listId}
           aria-autocomplete="list"
           aria-expanded={open}
           autoComplete="off"
           style={{ display: showDisplay ? 'none' : 'block' }}
-          className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12 pr-10"
+          className="w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-[52px] pr-10"
         />
 
         {loading && !showDisplay && (
@@ -187,14 +205,14 @@ export default function AddressSearch({ label, placeholder, value, onChange }: P
             width: dropdownRect.width,
             zIndex: 99999,
           }}
-          className="bg-white border border-gray-200 rounded-xl shadow-xl max-h-52 overflow-y-auto"
+          className="bg-white dark:bg-[#1C1C1E] border border-gray-200 dark:border-[#2A2A2C] rounded-xl shadow-xl dark:shadow-black/40 max-h-52 overflow-y-auto"
         >
           {suggestions.map((item, i) => (
             <li
               key={i}
               role="option"
               aria-selected={false}
-              className="px-4 py-3 cursor-pointer hover:bg-brand-gray active:bg-red-50 border-b border-gray-100 last:border-0 leading-snug"
+              className="px-4 py-3 cursor-pointer hover:bg-brand-gray dark:hover:bg-[#2A2A2C] active:bg-red-50 dark:active:bg-brand-red/10 border-b border-gray-100 dark:border-[#2A2A2C] last:border-0 leading-snug"
               onPointerDown={() => { listPointerDownRef.current = true }}
               onClick={() => handleSelect(item)}
             >
@@ -205,4 +223,6 @@ export default function AddressSearch({ label, placeholder, value, onChange }: P
       )}
     </div>
   )
-}
+})
+
+export default AddressSearch

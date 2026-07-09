@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import ThemeToggle from '@/components/ThemeToggle'
 
 function isPhone(value: string): boolean {
   const v = value.trim().replace(/\s/g, '')
@@ -105,8 +106,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-brand-gray flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col gap-6">
+    <main className="min-h-screen bg-brand-gray dark:bg-[#0A0A0B] flex items-center justify-center p-4 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="w-full max-w-sm bg-white dark:bg-[#141416] rounded-2xl shadow-sm border border-gray-200 dark:border-[#2A2A2C] p-8 flex flex-col gap-6">
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
@@ -121,7 +125,7 @@ export default function LoginPage() {
           <div className="text-center">
             <div className="flex items-center justify-center gap-1">
               <span className="font-black text-brand-red text-2xl tracking-tight">TAXI</span>
-              <span className="font-black text-brand-black text-2xl italic tracking-tight">Fast</span>
+              <span className="font-black text-brand-black dark:text-white text-2xl italic tracking-tight">Fast</span>
             </div>
             <p className="text-sm text-gray-400 mt-0.5">Connexion</p>
           </div>
@@ -135,7 +139,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Email ou téléphone</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email ou téléphone</label>
             <input
               type="text"
               autoComplete="username"
@@ -143,12 +147,12 @@ export default function LoginPage() {
               onChange={e => setIdentity(e.target.value)}
               placeholder="Email ou 0XX XXX XXX"
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-sm transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-sm transition-all"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Mot de passe</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe / PIN / Code</label>
             <div className="relative">
               <input
                 type={showPwd ? 'text' : 'password'}
@@ -156,7 +160,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-200 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-sm transition-all"
+                className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-sm transition-all"
               />
               <button
                 type="button"

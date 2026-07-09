@@ -10,7 +10,7 @@ export default function Card({ children, className = '', padding = 'md' }: CardP
   return (
     <div
       className={[
-        'bg-white rounded-2xl border border-gray-200 shadow-sm',
+        'bg-white dark:bg-[#141416] rounded-2xl border border-gray-200 dark:border-[#2A2A2C] shadow-sm dark:shadow-black/20',
         paddingClass[padding],
         className,
       ].join(' ')}

@@ -36,13 +36,13 @@ export default function ConfirmationScreen(props: Props) {
   return (
     <div className="flex flex-col items-center gap-6 py-8 text-center">
       {/* Success icon */}
-      <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-        <IconCheck size={28} className="text-green-600" />
+      <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+        <IconCheck size={28} className="text-green-600 dark:text-green-400" />
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-brand-black">Demande envoyée !</h2>
-        <p className="text-gray-500 mt-2 max-w-xs mx-auto leading-relaxed">
+        <h2 className="text-2xl font-bold text-brand-black dark:text-white">Demande envoyée !</h2>
+        <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-xs mx-auto leading-relaxed">
           On vous contacte dans quelques minutes pour confirmer votre course.
         </p>
       </div>
@@ -68,23 +68,23 @@ export default function ConfirmationScreen(props: Props) {
       )}
 
       {/* Récapitulatif */}
-      <div className="bg-brand-gray rounded-2xl p-4 w-full text-left space-y-2.5">
+      <div className="bg-brand-gray dark:bg-[#1C1C1E] rounded-2xl p-4 w-full text-left space-y-2.5">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Récapitulatif</p>
-        <p className="font-semibold text-brand-black">{SERVICE_LABELS[props.service]}</p>
+        <p className="font-semibold text-brand-black dark:text-white">{SERVICE_LABELS[props.service]}</p>
         {props.pickup && (
-          <div className="flex items-start gap-2 text-sm text-gray-700">
+          <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
             <span className="w-2 h-2 rounded-full bg-brand-red mt-1.5 flex-shrink-0" />
             {props.pickup.label}
           </div>
         )}
         {props.dropoff && (
-          <div className="flex items-start gap-2 text-sm text-gray-700">
+          <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
             <span className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
             {props.dropoff.label}
           </div>
         )}
         {props.price ? (
-          <p className="text-sm font-semibold text-brand-black">
+          <p className="text-sm font-semibold text-brand-black dark:text-white">
             Tarif : {props.price.toLocaleString('fr-MG')} Ar
           </p>
         ) : null}

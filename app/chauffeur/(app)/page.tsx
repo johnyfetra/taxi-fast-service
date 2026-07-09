@@ -28,13 +28,13 @@ type OrderWithStatus = Order & { driver_status: DriverOrderStatus | null }
 const NEXT_ACTIONS: Record<DriverOrderStatus, { label: string; next: DriverOrderStatus; variant: string }[]> = {
   'assigné':  [
     { label: '✓ Accepter',  next: 'accepté', variant: 'bg-green-500 text-white' },
-    { label: '✕ Occupé',   next: 'occupé',  variant: 'bg-gray-200 text-gray-700' },
+    { label: '✕ Occupé',   next: 'occupé',  variant: 'bg-gray-200 text-gray-700 dark:bg-[#2A2A2C] dark:text-gray-300' },
   ],
   'accepté':  [{ label: '▶ Démarrer', next: 'en_cours', variant: 'bg-blue-500 text-white' }],
   'en_cours': [
     { label: '✓ Livré',    next: 'livré',    variant: 'bg-green-500 text-white' },
     { label: '⚠ Problème', next: 'problème', variant: 'bg-orange-400 text-white' },
-    { label: '✕ Rejeter',  next: 'rejeté',   variant: 'bg-gray-200 text-gray-700' },
+    { label: '✕ Rejeter',  next: 'rejeté',   variant: 'bg-gray-200 text-gray-700 dark:bg-[#2A2A2C] dark:text-gray-300' },
   ],
   'occupé':   [],
   'livré':    [],
@@ -156,7 +156,7 @@ export default function DriverDashboard() {
   const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-[#0A0A0B] flex flex-col">
       {/* Header */}
       <header className="bg-[#0D0D0F] px-4 pt-5 pb-4">
         <div className="flex items-center justify-between mb-3">
@@ -199,8 +199,8 @@ export default function DriverDashboard() {
 
       {/* PIN change panel */}
       {showPinChange && (
-        <div className="bg-white border-b border-gray-100 px-4 py-5">
-          <h2 className="font-bold text-brand-black mb-3 text-sm">Modifier mon PIN</h2>
+        <div className="bg-white dark:bg-[#141416] border-b border-gray-100 dark:border-[#1E1E20] px-4 py-5">
+          <h2 className="font-bold text-brand-black dark:text-white mb-3 text-sm">Modifier mon PIN</h2>
           <div className="flex flex-col gap-3">
             <input
               type="text"
@@ -208,7 +208,7 @@ export default function DriverDashboard() {
               value={currentPin}
               onChange={e => setCurrentPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
               placeholder="PIN actuel (4 chiffres)"
-              className="bg-brand-gray border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-red"
+              className="bg-brand-gray dark:bg-[#1C1C1E] border border-gray-200 dark:border-[#2A2A2C] dark:text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-red"
             />
             <input
               type="text"
@@ -216,7 +216,7 @@ export default function DriverDashboard() {
               value={newPin}
               onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
               placeholder="Nouveau PIN (4 chiffres)"
-              className="bg-brand-gray border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-red"
+              className="bg-brand-gray dark:bg-[#1C1C1E] border border-gray-200 dark:border-[#2A2A2C] dark:text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-red"
             />
             {pinError && <p className="text-xs text-brand-red">{pinError}</p>}
             {pinSuccess && <p className="text-xs text-green-600">PIN modifié avec succès !</p>}
@@ -232,7 +232,7 @@ export default function DriverDashboard() {
       )}
 
       {/* Tabs */}
-      <div className="flex bg-white border-b border-gray-100">
+      <div className="flex bg-white dark:bg-[#141416] border-b border-gray-100 dark:border-[#1E1E20]">
         {(['today', 'history'] as const).map(t => (
           <button
             key={t}
@@ -254,12 +254,12 @@ export default function DriverDashboard() {
         ) : tab === 'today' ? (
           orders.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-              <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-white dark:bg-[#141416] flex items-center justify-center shadow-sm">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">
                   <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>
                 </svg>
               </div>
-              <p className="font-semibold text-brand-black">Aucune commande assignée</p>
+              <p className="font-semibold text-brand-black dark:text-white">Aucune commande assignée</p>
               <p className="text-sm text-gray-400">L&apos;admin vous assignera des trajets</p>
             </div>
           ) : (
@@ -274,7 +274,7 @@ export default function DriverDashboard() {
                 <div
                   key={order.id}
                   className={[
-                    'bg-white rounded-2xl shadow-sm overflow-hidden',
+                    'bg-white dark:bg-[#141416] rounded-2xl shadow-sm overflow-hidden',
                     isNew ? 'ring-2 ring-purple-400 ring-offset-1' : '',
                   ].join(' ')}
                 >
@@ -297,18 +297,18 @@ export default function DriverDashboard() {
                     </div>
 
                     {/* Customer */}
-                    <p className="font-bold text-brand-black mb-1">{order.customer_name}</p>
+                    <p className="font-bold text-brand-black dark:text-white mb-1">{order.customer_name}</p>
 
                     {/* Route */}
                     <div className="flex flex-col gap-1.5 mb-3">
                       {order.pickup && (
-                        <div className="flex items-start gap-2 text-sm text-gray-600">
+                        <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                           <span className="w-2 h-2 rounded-full bg-brand-red mt-1 shrink-0" />
                           <span>{order.pickup.label}</span>
                         </div>
                       )}
                       {order.dropoff && (
-                        <div className="flex items-start gap-2 text-sm text-gray-600">
+                        <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                           <span className="w-2 h-2 rounded-full bg-blue-500 mt-1 shrink-0" />
                           <span>{order.dropoff.label}</span>
                         </div>
@@ -318,17 +318,17 @@ export default function DriverDashboard() {
                     {/* Info chips */}
                     <div className="flex gap-2 mb-4 flex-wrap">
                       {order.distance_km && (
-                        <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-xs font-medium">
+                        <span className="bg-gray-100 dark:bg-[#1C1C1E] text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-lg text-xs font-medium">
                           {order.distance_km} km
                         </span>
                       )}
                       {order.duration_min && (
-                        <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-xs font-medium">
+                        <span className="bg-gray-100 dark:bg-[#1C1C1E] text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-lg text-xs font-medium">
                           ~{order.duration_min} min
                         </span>
                       )}
                       {order.price_offered && (
-                        <span className="bg-brand-gray text-brand-black px-2.5 py-1 rounded-lg text-xs font-semibold">
+                        <span className="bg-brand-gray dark:bg-[#1C1C1E] text-brand-black dark:text-white px-2.5 py-1 rounded-lg text-xs font-semibold">
                           {order.price_offered.toLocaleString('fr-MG')} Ar
                         </span>
                       )}
@@ -338,7 +338,7 @@ export default function DriverDashboard() {
                     <div className="flex gap-2 mb-2">
                       <a
                         href={`tel:${intlPhone}`}
-                        className="flex items-center gap-1.5 bg-gray-100 text-gray-700 px-3 py-2 rounded-xl text-sm font-medium"
+                        className="flex items-center gap-1.5 bg-gray-100 dark:bg-[#1C1C1E] text-gray-700 dark:text-gray-300 px-3 py-2 rounded-xl text-sm font-medium"
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
                         Appeler
@@ -379,10 +379,10 @@ export default function DriverDashboard() {
             <div className="text-center py-16 text-gray-400 text-sm">Aucun historique</div>
           ) : (
             history.map(order => (
-              <div key={order.id} className="bg-white rounded-2xl p-4 shadow-sm opacity-70">
+              <div key={order.id} className="bg-white dark:bg-[#141416] rounded-2xl p-4 shadow-sm opacity-70">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-brand-black text-sm">{order.customer_name}</p>
+                    <p className="font-semibold text-brand-black dark:text-white text-sm">{order.customer_name}</p>
                     <p className="text-xs text-gray-400 capitalize">{order.service}</p>
                   </div>
                   {order.driver_status && (

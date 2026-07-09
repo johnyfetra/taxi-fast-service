@@ -1,9 +1,9 @@
 'use client'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import type { ServiceType, Location, EstimateResult } from '@/lib/types'
 import ServiceSelector from '@/components/commander/ServiceSelector'
-import AddressSearch from '@/components/commander/AddressSearch'
+import AddressSearch, { type AddressSearchHandle } from '@/components/commander/AddressSearch'
 import EstimateCard from '@/components/commander/EstimateCard'
 import PriceDecision from '@/components/commander/PriceDecision'
 import ContactForm from '@/components/commander/ContactForm'
@@ -11,19 +11,6 @@ import ConfirmationScreen from '@/components/commander/ConfirmationScreen'
 import Button from '@/components/ui/Button'
 import { IconLocation, IconFlash, IconClock } from '@/components/icons'
 
-function PinIcon({ filled, type }: { filled: boolean; type: 'departure' | 'arrival' }) {
-  const color = !filled
-    ? '#D1D5DB'
-    : type === 'departure'
-    ? '#D81F26'
-    : '#3B82F6'
-  return (
-    <svg width="16" height="20" viewBox="0 0 16 20" fill="none" aria-hidden="true">
-      <path d="M8 0C3.58 0 0 3.58 0 8 0 13.25 8 20 8 20S16 13.25 16 8C16 3.58 12.42 0 8 0Z" fill={color} />
-      <circle cx="8" cy="8" r="3" fill="white" />
-    </svg>
-  )
-}
 
 const LeafletMap = dynamic(() => import('@/components/commander/LeafletMap'), {
   ssr: false,
@@ -83,6 +70,19 @@ export default function CommanderClient({ initialService }: { initialService?: S
   const [orderId, setOrderId] = useState('')
   const [accessCode, setAccessCode] = useState<string | null>(null)
   const [geolocating, setGeolocating] = useState(false)
+  const dropoffRef = useRef<AddressSearchHandle>(null)
+  const prevPickupRef = useRef<Location | null>(null)
+
+  // Auto-focus arrivée dès que le départ est renseigné pour la première fois
+  useEffect(() => {
+    const wasEmpty = prevPickupRef.current === null
+    const isNowSet = pickup !== null
+    if (wasEmpty && isNowSet && service !== 'courses' && !dropoff) {
+      setTimeout(() => dropoffRef.current?.focus(), 250)
+    }
+    prevPickupRef.current = pickup
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickup])
 
   const handleGeolocate = useCallback(() => {
     if (!navigator.geolocation) {
@@ -246,13 +246,13 @@ export default function CommanderClient({ initialService }: { initialService?: S
                   step === s
                     ? 'bg-brand-red text-white'
                     : ['service', 'addresses', 'estimate', 'contact'].indexOf(step) > i
-                    ? 'bg-brand-black text-white'
-                    : 'bg-gray-200 text-gray-500',
+                    ? 'bg-brand-black dark:bg-white text-white dark:text-brand-black'
+                    : 'bg-gray-200 dark:bg-[#2A2A2C] text-gray-500 dark:text-gray-400',
                 ].join(' ')}
               >
                 {i + 1}
               </div>
-              {i < 3 && <div className={['h-0.5 flex-1', i < ['service', 'addresses', 'estimate', 'contact'].indexOf(step) ? 'bg-brand-black' : 'bg-gray-200'].join(' ')} />}
+              {i < 3 && <div className={['h-0.5 flex-1', i < ['service', 'addresses', 'estimate', 'contact'].indexOf(step) ? 'bg-brand-black dark:bg-white' : 'bg-gray-200 dark:bg-[#2A2A2C]'].join(' ')} />}
             </div>
           ))}
         </div>
@@ -261,77 +261,78 @@ export default function CommanderClient({ initialService }: { initialService?: S
       {/* STEP 1 — Service */}
       {step === 'service' && (
         <div className="flex flex-col gap-4">
-          <h1 className="text-xl font-bold text-brand-black">Quel service souhaitez-vous ?</h1>
+          <h1 className="text-xl font-bold text-brand-black dark:text-white">Quel service souhaitez-vous ?</h1>
           <ServiceSelector value={service} onChange={(s) => { setService(s); setStep('addresses') }} />
         </div>
       )}
 
       {/* STEP 2 — Addresses */}
       {step === 'addresses' && service && (
-        <div className="flex flex-col gap-4">
-          <button onClick={() => setStep('service')} className="text-sm text-gray-500 flex items-center gap-1">
+        <div className="flex flex-col gap-5">
+          <button onClick={() => setStep('service')} className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 self-start">
             ← Changer de service
           </button>
-          <h1 className="text-xl font-bold text-brand-black">
+          <h1 className="text-2xl font-black text-brand-black dark:text-white">
             {service === 'taxi' ? 'Votre trajet' : service === 'colis' ? 'Livraison de colis' : 'Votre commande de courses'}
           </h1>
 
-          {/* Départ + Arrivée avec connecteur visuel */}
-          <div className="flex gap-3 items-stretch">
-            {/* Colonne gauche : pins GPS + tiret discontinu */}
-            <div className="flex flex-col items-center flex-shrink-0 w-4" style={{ paddingTop: '2px' }}>
-              <PinIcon filled={!!pickup} type="departure" />
-              {service !== 'courses' && (
-                <>
-                  <div
-                    className="flex-1 my-1.5"
-                    style={{ width: 0, borderLeft: '2px dashed #D1D5DB', minHeight: 60 }}
-                  />
-                  <PinIcon filled={!!dropoff} type="arrival" />
-                </>
-              )}
+          {/* Carte adresses — départ + arrivée groupés */}
+          <div className="bg-white dark:bg-[#141416] rounded-2xl shadow-sm border border-gray-100 dark:border-[#1E1E20] overflow-visible">
+
+            {/* Départ */}
+            <div className="px-4 pt-4 pb-4">
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="w-3.5 h-3.5 rounded-full bg-brand-red flex-shrink-0 shadow-sm" />
+                <span className="text-base font-bold text-brand-black dark:text-white">Point de départ</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleGeolocate}
+                disabled={geolocating}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed border-brand-red/40 bg-red-50/50 dark:bg-brand-red/5 text-brand-red font-semibold text-sm hover:bg-red-50 dark:hover:bg-brand-red/10 active:scale-[0.98] transition-all mb-3 disabled:opacity-60"
+              >
+                <IconLocation size={17} />
+                {geolocating ? 'Détection en cours…' : 'Ma position actuelle'}
+              </button>
+              <AddressSearch
+                label="Ou saisir l'adresse"
+                placeholder="Quartier, rue, lieu-dit…"
+                value={pickup}
+                onChange={setPickup}
+              />
             </div>
 
-            {/* Colonne droite : champs */}
-            <div className="flex flex-col flex-1 min-w-0" style={{ gap: service !== 'courses' ? 20 : 0 }}>
-              {/* Départ */}
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-brand-red">Point de départ</span>
-                <Button
-                  variant="secondary"
-                  size="md"
-                  className="w-full"
-                  loading={geolocating}
-                  onClick={handleGeolocate}
-                  type="button"
-                >
-                  <IconLocation size={17} />
-                  {geolocating ? 'Détection en cours…' : 'Ma position actuelle'}
-                </Button>
+            {/* Séparateur visuel départ → arrivée */}
+            {service !== 'courses' && (
+              <div className="flex items-center gap-3 px-4 py-1">
+                <div className="flex-1 border-t border-dashed border-gray-200" />
+                <div className="flex flex-col gap-0.5">
+                  <div className="w-0.5 h-1.5 bg-gray-300 rounded-full mx-auto" />
+                  <div className="w-0.5 h-1.5 bg-gray-300 rounded-full mx-auto" />
+                  <div className="w-0.5 h-1.5 bg-gray-300 rounded-full mx-auto" />
+                </div>
+                <div className="flex-1 border-t border-dashed border-gray-200" />
+              </div>
+            )}
+
+            {/* Arrivée */}
+            {service !== 'courses' && (
+              <div className="px-4 pt-3 pb-4">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <span className="w-3.5 h-3.5 rounded-full bg-blue-500 flex-shrink-0 shadow-sm" />
+                  <span className="text-base font-bold text-brand-black dark:text-white">Point d'arrivée</span>
+                </div>
                 <AddressSearch
-                  label="Ou rechercher l'adresse"
-                  placeholder="Quartier, rue, lieu-dit…"
-                  value={pickup}
-                  onChange={setPickup}
+                  ref={dropoffRef}
+                  placeholder="Où voulez-vous aller ?"
+                  value={dropoff}
+                  onChange={setDropoff}
                 />
               </div>
-
-              {/* Arrivée — pas pour courses */}
-              {service !== 'courses' && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-semibold text-blue-500">Point d'arrivée</span>
-                  <AddressSearch
-                    label="Rechercher la destination"
-                    placeholder="Rechercher la destination…"
-                    value={dropoff}
-                    onChange={setDropoff}
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* Carte — max 40% de la hauteur sur mobile */}
+          {/* Carte — visible dès qu'un point est placé */}
           {(pickup || dropoff) && service !== 'courses' && (
             <LeafletMap
               pickup={pickup}
@@ -346,7 +347,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
             <div className="flex flex-col gap-4">
               {/* Type de colis */}
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-brand-black">Type de colis</p>
+                <p className="text-sm font-medium text-brand-black dark:text-white">Type de colis</p>
                 <div className="grid grid-cols-2 gap-2">
                   {COLIS_TYPES.map((t) => (
                     <button
@@ -356,8 +357,8 @@ export default function CommanderClient({ initialService }: { initialService?: S
                       className={[
                         'flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all text-left',
                         colisType === t.value
-                          ? 'border-brand-red bg-red-50 text-brand-red'
-                          : 'border-gray-200 text-gray-700 hover:border-gray-300',
+                          ? 'border-brand-red bg-red-50 dark:bg-brand-red/10 text-brand-red'
+                          : 'border-gray-200 dark:border-[#2A2A2C] text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:bg-[#1C1C1E]',
                       ].join(' ')}
                     >
                       <span className={['w-2 h-2 rounded-full flex-shrink-0', colisType === t.value ? 'bg-brand-red' : 'bg-gray-300'].join(' ')} />
@@ -372,14 +373,14 @@ export default function CommanderClient({ initialService }: { initialService?: S
                     onChange={(e) => setColisTypeAutre(e.target.value)}
                     placeholder="Décrivez le colis…"
                     maxLength={100}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 )}
               </div>
 
               {/* Taille */}
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-brand-black">Taille du colis</p>
+                <p className="text-sm font-medium text-brand-black dark:text-white">Taille du colis</p>
                 <div className="flex gap-2">
                   {SIZES.map((s) => (
                     <button
@@ -389,8 +390,8 @@ export default function CommanderClient({ initialService }: { initialService?: S
                       className={[
                         'flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold capitalize transition-all',
                         colisSize === s
-                          ? 'border-brand-red bg-red-50 text-brand-red'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300',
+                          ? 'border-brand-red bg-red-50 dark:bg-brand-red/10 text-brand-red'
+                          : 'border-gray-200 dark:border-[#2A2A2C] text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:bg-[#1C1C1E]',
                       ].join(' ')}
                     >
                       {s}
@@ -401,19 +402,19 @@ export default function CommanderClient({ initialService }: { initialService?: S
 
               {/* Quantité */}
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-brand-black">Quantité</span>
+                <span className="text-sm font-medium text-brand-black dark:text-white">Quantité</span>
                 <div className="flex items-center gap-3 ml-auto">
                   <button
                     type="button"
                     onClick={() => setColisQty(Math.max(1, colisQty - 1))}
-                    className="w-9 h-9 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold text-lg hover:border-brand-red transition-colors"
+                    className="w-9 h-9 rounded-full border-2 border-gray-300 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white flex items-center justify-center font-bold text-lg hover:border-brand-red transition-colors"
                     aria-label="Diminuer"
                   >−</button>
                   <span className="text-lg font-bold w-6 text-center">{colisQty}</span>
                   <button
                     type="button"
                     onClick={() => setColisQty(Math.min(10, colisQty + 1))}
-                    className="w-9 h-9 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold text-lg hover:border-brand-red transition-colors"
+                    className="w-9 h-9 rounded-full border-2 border-gray-300 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white flex items-center justify-center font-bold text-lg hover:border-brand-red transition-colors"
                     aria-label="Augmenter"
                   >+</button>
                 </div>
@@ -426,7 +427,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
             <div className="flex flex-col gap-4">
               {/* Type de courses */}
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-brand-black">Type de courses</p>
+                <p className="text-sm font-medium text-brand-black dark:text-white">Type de courses</p>
                 <div className="grid grid-cols-2 gap-2">
                   {COURSES_TYPES.map((t) => (
                     <button
@@ -436,8 +437,8 @@ export default function CommanderClient({ initialService }: { initialService?: S
                       className={[
                         'flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all text-left',
                         coursesType === t.value
-                          ? 'border-brand-red bg-red-50 text-brand-red'
-                          : 'border-gray-200 text-gray-700 hover:border-gray-300',
+                          ? 'border-brand-red bg-red-50 dark:bg-brand-red/10 text-brand-red'
+                          : 'border-gray-200 dark:border-[#2A2A2C] text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:bg-[#1C1C1E]',
                       ].join(' ')}
                     >
                       <span className={['w-2 h-2 rounded-full flex-shrink-0', coursesType === t.value ? 'bg-brand-red' : 'bg-gray-300'].join(' ')} />
@@ -452,24 +453,24 @@ export default function CommanderClient({ initialService }: { initialService?: S
                     onChange={(e) => setCoursesTypeAutre(e.target.value)}
                     placeholder="Précisez le type de courses…"
                     maxLength={100}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 )}
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-brand-black" htmlFor="quartier">Quartier de livraison</label>
+                <label className="text-sm font-medium text-brand-black dark:text-white" htmlFor="quartier">Quartier de livraison</label>
                 <input
                   id="quartier"
                   type="text"
                   value={coursesQuartier}
                   onChange={(e) => setCoursesQuartier(e.target.value)}
                   placeholder="Ex : Analakely, Ivandry…"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-brand-black" htmlFor="description">Liste de courses détaillée</label>
+                <label className="text-sm font-medium text-brand-black dark:text-white" htmlFor="description">Liste de courses détaillée</label>
                 <textarea
                   id="description"
                   value={coursesDesc}
@@ -477,7 +478,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
                   placeholder="Ex : 2 bouteilles d'eau, pain, tomates, savon…"
                   rows={3}
                   maxLength={500}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base resize-none placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
             </div>
@@ -486,7 +487,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
           {/* Date/heure de récupération — taxi et colis uniquement */}
           {(service === 'taxi' || service === 'colis') && (
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-medium text-brand-black">Quand souhaitez-vous être pris en charge ?</p>
+              <p className="text-sm font-medium text-brand-black dark:text-white">Quand souhaitez-vous être pris en charge ?</p>
               <div className="flex gap-2">
                 {[
                   { value: 'now' as const,   label: 'Maintenant', Icon: IconFlash },
@@ -499,8 +500,8 @@ export default function CommanderClient({ initialService }: { initialService?: S
                     className={[
                       'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all',
                       pickupSchedule === value
-                        ? 'border-brand-red bg-red-50 text-brand-red'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300',
+                        ? 'border-brand-red bg-red-50 dark:bg-brand-red/10 text-brand-red'
+                        : 'border-gray-200 dark:border-[#2A2A2C] text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:bg-[#1C1C1E]',
                     ].join(' ')}
                   >
                     <Icon size={16} />
@@ -514,14 +515,14 @@ export default function CommanderClient({ initialService }: { initialService?: S
                   value={pickupDatetime}
                   onChange={(e) => setPickupDatetime(e.target.value)}
                   min={new Date(Date.now() + 10 * 60000).toISOString().slice(0, 16)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               )}
             </div>
           )}
 
           {estimateError && (
-            <p role="alert" className="text-sm text-brand-red bg-red-50 rounded-xl px-4 py-3">
+            <p role="alert" className="text-sm text-brand-red bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3">
               {estimateError}
             </p>
           )}
@@ -541,32 +542,32 @@ export default function CommanderClient({ initialService }: { initialService?: S
       {/* STEP 3 — Estimate + Decision */}
       {step === 'estimate' && estimate && service && (
         <div className="flex flex-col gap-4">
-          <button onClick={() => setStep('addresses')} className="text-sm text-gray-500 flex items-center gap-1">
+          <button onClick={() => setStep('addresses')} className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
             ← Modifier les adresses
           </button>
-          <h1 className="text-xl font-bold text-brand-black">Votre estimation</h1>
+          <h1 className="text-xl font-bold text-brand-black dark:text-white">Votre estimation</h1>
 
           {/* Récapitulatif trajet */}
           {pickup && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-4">
+            <div className="bg-white dark:bg-[#141416] rounded-2xl border border-gray-100 dark:border-[#2A2A2C] shadow-sm dark:shadow-black/20 px-4 py-4">
               {/* Départ → Arrivée */}
               <div className="flex items-stretch gap-3">
                 {/* Timeline */}
                 <div className="flex flex-col items-center pt-0.5 flex-shrink-0">
-                  <div className="w-2.5 h-2.5 rounded-full bg-brand-red ring-2 ring-red-100" />
-                  {dropoff && <div className="w-px flex-1 bg-gray-200 my-1.5" />}
-                  {dropoff && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-blue-100" />}
+                  <div className="w-2.5 h-2.5 rounded-full bg-brand-red ring-2 ring-red-100 dark:ring-brand-red/20" />
+                  {dropoff && <div className="w-px flex-1 bg-gray-200 dark:bg-[#2A2A2C] my-1.5" />}
+                  {dropoff && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-blue-100 dark:ring-blue-500/20" />}
                 </div>
                 {/* Labels */}
                 <div className="flex flex-col flex-1 gap-3">
                   <div>
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-0.5">Départ</p>
-                    <p className="text-sm font-medium text-brand-black leading-snug line-clamp-2">{pickup.label}</p>
+                    <p className="text-sm font-medium text-brand-black dark:text-white leading-snug line-clamp-2">{pickup.label}</p>
                   </div>
                   {dropoff && (
                     <div>
                       <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-0.5">Arrivée</p>
-                      <p className="text-sm font-medium text-brand-black leading-snug line-clamp-2">{dropoff.label}</p>
+                      <p className="text-sm font-medium text-brand-black dark:text-white leading-snug line-clamp-2">{dropoff.label}</p>
                     </div>
                   )}
                 </div>
@@ -575,19 +576,19 @@ export default function CommanderClient({ initialService }: { initialService?: S
               {/* Date de récupération — taxi & colis uniquement */}
               {(service === 'taxi' || service === 'colis') && (
                 <>
-                  <div className="border-t border-gray-100 mt-3.5 mb-3" />
+                  <div className="border-t border-gray-100 dark:border-[#2A2A2C] mt-3.5 mb-3" />
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-brand-gray flex items-center justify-center flex-shrink-0">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                    <div className="w-7 h-7 rounded-lg bg-brand-gray dark:bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 dark:text-gray-400">
                         <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                       </svg>
                     </div>
                     <div>
                       <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-0.5">Prise en charge</p>
                       {pickupSchedule === 'now' ? (
-                        <p className="text-sm font-semibold text-green-600">Maintenant</p>
+                        <p className="text-sm font-semibold text-green-600 dark:text-green-400">Maintenant</p>
                       ) : (
-                        <p className="text-sm font-semibold text-brand-black">
+                        <p className="text-sm font-semibold text-brand-black dark:text-white">
                           {pickupDatetime
                             ? new Date(pickupDatetime).toLocaleString('fr-FR', {
                                 weekday: 'short', day: 'numeric', month: 'short',
@@ -617,13 +618,13 @@ export default function CommanderClient({ initialService }: { initialService?: S
       {/* STEP 4 — Contact */}
       {step === 'contact' && (
         <div className="flex flex-col gap-4">
-          <button onClick={() => setStep('estimate')} className="text-sm text-gray-500 flex items-center gap-1">
+          <button onClick={() => setStep('estimate')} className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
             ← Retour
           </button>
-          <h1 className="text-xl font-bold text-brand-black">Vos coordonnées</h1>
-          <p className="text-sm text-gray-500">Nous vous appellerons pour confirmer.</p>
+          <h1 className="text-xl font-bold text-brand-black dark:text-white">Vos coordonnées</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Nous vous appellerons pour confirmer.</p>
           {submitError && (
-            <p role="alert" className="text-sm text-brand-red bg-red-50 rounded-xl px-4 py-3">
+            <p role="alert" className="text-sm text-brand-red bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3">
               {submitError}
             </p>
           )}
@@ -634,12 +635,12 @@ export default function CommanderClient({ initialService }: { initialService?: S
       {/* Annulation enregistrée */}
       {step === 'cancelled' && (
         <div className="flex flex-col items-center text-center gap-6 py-8">
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-2xl">
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-[#1C1C1E] flex items-center justify-center text-2xl text-gray-500 dark:text-gray-400">
             ✕
           </div>
           <div className="flex flex-col gap-2">
-            <h1 className="text-xl font-bold text-brand-black">Commande annulée</h1>
-            <p className="text-sm text-gray-500 max-w-xs mx-auto leading-relaxed">
+            <h1 className="text-xl font-bold text-brand-black dark:text-white">Commande annulée</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto leading-relaxed">
               Votre refus a été enregistré. Nous en prenons note pour améliorer notre service.
             </p>
           </div>

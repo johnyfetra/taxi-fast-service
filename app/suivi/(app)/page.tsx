@@ -145,7 +145,7 @@ export default function SuiviPage() {
   const past   = orders.filter(o =>  ['done', 'cancelled', 'client_cancelled'].includes(o.status))
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-[#0A0A0B]">
       {/* Notification toast */}
       {toast && (
         <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
@@ -214,8 +214,8 @@ export default function SuiviPage() {
 
       {/* Settings panel */}
       {showSettings && (
-        <div className="bg-white border-b border-gray-100 px-4 py-5">
-          <h2 className="font-bold text-brand-black mb-4 flex items-center gap-2">
+        <div className="bg-white border-b border-gray-100 px-4 py-5 dark:bg-[#141416] dark:border-[#1E1E20]">
+          <h2 className="font-bold text-brand-black mb-4 flex items-center gap-2 dark:text-white">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400"><circle cx="12" cy="12" r="3"/></svg>
             Modifier mon code de suivi
           </h2>
@@ -226,7 +226,7 @@ export default function SuiviPage() {
               value={currentCode}
               onChange={e => setCurrentCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="Code actuel (6 chiffres)"
-              className="bg-brand-gray border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-red"
+              className="bg-brand-gray border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-red dark:bg-[#1C1C1E] dark:border-[#2A2A2C] dark:text-white dark:placeholder-gray-500"
             />
             <input
               type="text"
@@ -234,7 +234,7 @@ export default function SuiviPage() {
               value={newCode}
               onChange={e => setNewCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="Nouveau code (6 chiffres)"
-              className="bg-brand-gray border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-red"
+              className="bg-brand-gray border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-brand-red dark:bg-[#1C1C1E] dark:border-[#2A2A2C] dark:text-white dark:placeholder-gray-500"
             />
             {codeError && <p className="text-sm text-brand-red">{codeError}</p>}
             {codeSuccess && <p className="text-sm text-green-600">Code modifié avec succès !</p>}
@@ -255,12 +255,12 @@ export default function SuiviPage() {
           <div className="text-center py-16 text-gray-400 text-sm">Chargement…</div>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm dark:bg-[#141416]">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-gray-300">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
               </svg>
             </div>
-            <p className="font-semibold text-brand-black">Aucune commande</p>
+            <p className="font-semibold text-brand-black dark:text-white">Aucune commande</p>
             <p className="text-sm text-gray-400">Vos futures commandes apparaîtront ici</p>
             <a href="/commander" className="bg-brand-red text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors">
               Commander maintenant
@@ -294,7 +294,7 @@ function OrderCard({ order }: { order: TrackingOrder }) {
   const isDone = order.status === 'done'
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm overflow-hidden ${isDone ? 'opacity-80' : ''}`}>
+    <div className={`bg-white rounded-2xl shadow-sm overflow-hidden dark:bg-[#141416] ${isDone ? 'opacity-80' : ''}`}>
       {/* Header */}
       <button
         onClick={() => setExpanded(e => !e)}
@@ -306,7 +306,7 @@ function OrderCard({ order }: { order: TrackingOrder }) {
               <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
                 {statusInfo.label}
               </span>
-              <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-medium">
+              <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-medium dark:bg-[#1C1C1E] dark:text-gray-300">
                 {SERVICE_LABEL[order.service] ?? order.service}
               </span>
             </div>
@@ -344,18 +344,18 @@ function OrderCard({ order }: { order: TrackingOrder }) {
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t border-gray-100 px-4 pb-4 pt-3 flex flex-col gap-3">
+        <div className="border-t border-gray-100 px-4 pb-4 pt-3 flex flex-col gap-3 dark:border-[#1E1E20]">
           {/* Route */}
           {(order.pickup || order.dropoff) && (
             <div className="flex flex-col gap-1.5">
               {order.pickup && (
-                <div className="flex items-start gap-2 text-sm text-gray-700">
+                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <span className="w-2 h-2 rounded-full bg-brand-red mt-1 shrink-0" />
                   <span>{order.pickup.label}</span>
                 </div>
               )}
               {order.dropoff && (
-                <div className="flex items-start gap-2 text-sm text-gray-700">
+                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <span className="w-2 h-2 rounded-full bg-blue-500 mt-1 shrink-0" />
                   <span>{order.dropoff.label}</span>
                 </div>
@@ -366,17 +366,17 @@ function OrderCard({ order }: { order: TrackingOrder }) {
           {/* Chips */}
           <div className="flex gap-2 flex-wrap">
             {order.price_offered && (
-              <span className="bg-brand-gray text-brand-black px-2.5 py-1 rounded-lg text-xs font-semibold">
+              <span className="bg-brand-gray text-brand-black px-2.5 py-1 rounded-lg text-xs font-semibold dark:bg-[#1C1C1E] dark:text-white">
                 {order.price_offered.toLocaleString('fr-MG')} Ar
               </span>
             )}
             {order.distance_km && (
-              <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-xs">
+              <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-xs dark:bg-[#1C1C1E] dark:text-gray-300">
                 {order.distance_km} km
               </span>
             )}
             {order.duration_min && (
-              <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-xs">
+              <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-xs dark:bg-[#1C1C1E] dark:text-gray-300">
                 ~{order.duration_min} min
               </span>
             )}
@@ -396,7 +396,7 @@ function OrderCard({ order }: { order: TrackingOrder }) {
                       <div className={[
                         'w-5 h-5 rounded-full border-2 flex items-center justify-center text-[9px]',
                         done ? 'bg-green-500 border-green-500 text-white' :
-                        isCurrent ? 'border-brand-red bg-red-50' : 'border-gray-300 bg-white',
+                        isCurrent ? 'border-brand-red bg-red-50 dark:bg-red-950/20' : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-[#1C1C1E]',
                       ].join(' ')}>
                         {done && (
                           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -407,7 +407,7 @@ function OrderCard({ order }: { order: TrackingOrder }) {
                       </p>
                     </div>
                     {i < STATUS_STEPS.length - 1 && (
-                      <div className={`flex-1 h-0.5 mx-0.5 mb-4 ${done ? 'bg-green-400' : 'bg-gray-200'}`} />
+                      <div className={`flex-1 h-0.5 mx-0.5 mb-4 ${done ? 'bg-green-400' : 'bg-gray-200 dark:bg-[#2A2A2C]'}`} />
                     )}
                   </div>
                 )

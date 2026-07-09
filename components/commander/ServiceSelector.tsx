@@ -29,22 +29,24 @@ export default function ServiceSelector({ value, onChange }: Props) {
           className={[
             'flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all min-h-16',
             value === key
-              ? 'border-brand-red bg-red-50'
-              : 'border-gray-200 bg-white hover:border-gray-300 active:border-brand-red',
+              ? 'border-brand-red bg-red-50 dark:bg-brand-red/10'
+              : 'border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#141416] hover:border-gray-300 dark:hover:border-[#3A3A3C] active:border-brand-red',
           ].join(' ')}
           aria-pressed={value === key}
         >
           <div
             className={[
               'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors',
-              value === key ? 'bg-brand-red text-white' : 'bg-brand-gray text-gray-500',
+              value === key
+                ? 'bg-brand-red text-white'
+                : 'bg-brand-gray dark:bg-[#1C1C1E] text-gray-500 dark:text-gray-400',
             ].join(' ')}
           >
             <Icon size={22} />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-brand-black">{label}</p>
-            <p className="text-sm text-gray-500">{desc}</p>
+            <p className="font-semibold text-brand-black dark:text-white">{label}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{desc}</p>
           </div>
           {value === key && (
             <IconCheck size={18} className="text-brand-red flex-shrink-0" />
