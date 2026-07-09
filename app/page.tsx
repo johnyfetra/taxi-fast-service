@@ -67,7 +67,7 @@ export default function LandingPage() {
 
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="bg-white dark:bg-[#141416] flex flex-col items-center text-center px-5 pt-12 pb-14">
-        <LogoMark size={72} className="mb-8" />
+        <LogoMark size={160} className="mb-6" />
 
         <h1
           className="font-black text-brand-black dark:text-white"
