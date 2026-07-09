@@ -9,7 +9,7 @@ import PriceDecision from '@/components/commander/PriceDecision'
 import ContactForm from '@/components/commander/ContactForm'
 import ConfirmationScreen from '@/components/commander/ConfirmationScreen'
 import Button from '@/components/ui/Button'
-import { IconLocation, IconFlash, IconClock } from '@/components/icons'
+import { IconLocation, IconFlash, IconClock, IconMapPin } from '@/components/icons'
 
 
 const LeafletMap = dynamic(() => import('@/components/commander/LeafletMap'), {
@@ -70,6 +70,8 @@ export default function CommanderClient({ initialService }: { initialService?: S
   const [orderId, setOrderId] = useState('')
   const [accessCode, setAccessCode] = useState<string | null>(null)
   const [geolocating, setGeolocating] = useState(false)
+  const [geoError, setGeoError] = useState('')
+  const [customerName, setCustomerName] = useState('')
   const dropoffRef = useRef<AddressSearchHandle>(null)
   const prevPickupRef = useRef<Location | null>(null)
 
@@ -85,8 +87,9 @@ export default function CommanderClient({ initialService }: { initialService?: S
   }, [pickup])
 
   const handleGeolocate = useCallback(() => {
+    setGeoError('')
     if (!navigator.geolocation) {
-      alert('La géolocalisation n\'est pas disponible sur votre navigateur.')
+      setGeoError('La géolocalisation n\'est pas disponible sur votre navigateur.')
       return
     }
     setGeolocating(true)
@@ -107,9 +110,9 @@ export default function CommanderClient({ initialService }: { initialService?: S
       (err) => {
         setGeolocating(false)
         if (err.code === 1) {
-          alert('Accès à la position refusé. Autorisez la géolocalisation dans les paramètres de votre navigateur.')
+          setGeoError('Accès à la position refusé. Autorisez la géolocalisation dans les paramètres de votre navigateur.')
         } else {
-          alert('Impossible de détecter votre position. Veuillez saisir votre adresse manuellement.')
+          setGeoError('Impossible de détecter votre position. Veuillez saisir votre adresse manuellement.')
         }
       },
       { timeout: 15000, enableHighAccuracy: false, maximumAge: 60000 }
@@ -213,6 +216,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
         const data = await res.json()
         setOrderId(data.id)
         setAccessCode(data.access_code ?? null)
+        setCustomerName(name)
         setStep('done')
       } catch {
         setSubmitError('Erreur lors de l\'envoi. Vérifiez votre connexion et réessayez.')
@@ -230,8 +234,10 @@ export default function CommanderClient({ initialService }: { initialService?: S
     }
   }, [service, step])
 
+  const needsDatetime = (service === 'taxi' || service === 'colis') && pickupSchedule === 'later'
   const canProceedToEstimate =
-    pickup && (service === 'courses' || dropoff)
+    pickup && (service === 'courses' || dropoff) &&
+    (!needsDatetime || !!pickupDatetime)
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
@@ -276,58 +282,67 @@ export default function CommanderClient({ initialService }: { initialService?: S
             {service === 'taxi' ? 'Votre trajet' : service === 'colis' ? 'Livraison de colis' : 'Votre commande de courses'}
           </h1>
 
-          {/* Carte adresses — départ + arrivée groupés */}
-          <div className="bg-white dark:bg-[#141416] rounded-2xl shadow-sm border border-gray-100 dark:border-[#1E1E20] overflow-visible">
+          {/* Carte adresses — style itinéraire compact (inDrive / Google Maps) */}
+          <div className="bg-white dark:bg-[#141416] rounded-2xl shadow-sm border border-gray-100 dark:border-[#1E1E20] overflow-hidden transition-[border-color,box-shadow] focus-within:border-gray-300 dark:focus-within:border-[#3A3A3C] focus-within:shadow-md dark:focus-within:shadow-black/30">
 
-            {/* Départ */}
-            <div className="px-4 pt-4 pb-4">
-              <div className="flex items-center gap-2.5 mb-3">
-                <span className="w-3.5 h-3.5 rounded-full bg-brand-red flex-shrink-0 shadow-sm" />
-                <span className="text-base font-bold text-brand-black dark:text-white">Point de départ</span>
+            {/* Ligne Départ */}
+            <div className="flex items-center min-h-[56px]">
+              <div className="w-12 flex-shrink-0 flex items-center justify-center">
+                <IconMapPin
+                  size={20}
+                  className={pickup ? 'text-brand-red' : 'text-gray-300 dark:text-gray-600'}
+                />
               </div>
-              <button
-                type="button"
-                onClick={handleGeolocate}
-                disabled={geolocating}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed border-brand-red/40 bg-red-50/50 dark:bg-brand-red/5 text-brand-red font-semibold text-sm hover:bg-red-50 dark:hover:bg-brand-red/10 active:scale-[0.98] transition-all mb-3 disabled:opacity-60"
-              >
-                <IconLocation size={17} />
-                {geolocating ? 'Détection en cours…' : 'Ma position actuelle'}
-              </button>
-              <AddressSearch
-                label="Ou saisir l'adresse"
-                placeholder="Quartier, rue, lieu-dit…"
-                value={pickup}
-                onChange={setPickup}
-              />
+              <div className="flex-1 min-w-0 py-3.5 pr-3">
+                <AddressSearch
+                  bare
+                  placeholder="D'où partez-vous ?"
+                  value={pickup}
+                  onChange={setPickup}
+                />
+              </div>
+              <div className="flex items-center pr-3.5">
+                <button
+                  type="button"
+                  onClick={handleGeolocate}
+                  disabled={geolocating}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:text-brand-red dark:hover:text-brand-red hover:bg-red-50 dark:hover:bg-brand-red/10 transition-colors disabled:opacity-40 flex-shrink-0"
+                  aria-label="Détecter ma position"
+                  title="Ma position actuelle"
+                >
+                  {geolocating
+                    ? <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+                    : <IconLocation size={17} />}
+                </button>
+              </div>
             </div>
 
-            {/* Séparateur visuel départ → arrivée */}
-            {service !== 'courses' && (
-              <div className="flex items-center gap-3 px-4 py-1">
-                <div className="flex-1 border-t border-dashed border-gray-200" />
-                <div className="flex flex-col gap-0.5">
-                  <div className="w-0.5 h-1.5 bg-gray-300 rounded-full mx-auto" />
-                  <div className="w-0.5 h-1.5 bg-gray-300 rounded-full mx-auto" />
-                  <div className="w-0.5 h-1.5 bg-gray-300 rounded-full mx-auto" />
-                </div>
-                <div className="flex-1 border-t border-dashed border-gray-200" />
-              </div>
+
+            {/* Erreur géoloc */}
+            {geoError && (
+              <p role="alert" className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-100 dark:border-amber-800/40 px-4 py-2">
+                {geoError}
+              </p>
             )}
 
-            {/* Arrivée */}
+            {/* Ligne Arrivée */}
             {service !== 'courses' && (
-              <div className="px-4 pt-3 pb-4">
-                <div className="flex items-center gap-2.5 mb-3">
-                  <span className="w-3.5 h-3.5 rounded-full bg-blue-500 flex-shrink-0 shadow-sm" />
-                  <span className="text-base font-bold text-brand-black dark:text-white">Point d'arrivée</span>
+              <div className="flex items-center min-h-[56px] border-t border-gray-100 dark:border-[#1E1E20]">
+                <div className="w-12 flex-shrink-0 flex items-center justify-center">
+                  <IconMapPin
+                    size={20}
+                    className={dropoff ? 'text-blue-500' : 'text-gray-300 dark:text-gray-600'}
+                  />
                 </div>
-                <AddressSearch
-                  ref={dropoffRef}
-                  placeholder="Où voulez-vous aller ?"
-                  value={dropoff}
-                  onChange={setDropoff}
-                />
+                <div className="flex-1 min-w-0 py-3.5 pr-4">
+                  <AddressSearch
+                    ref={dropoffRef}
+                    bare
+                    placeholder="Où voulez-vous aller ?"
+                    value={dropoff}
+                    onChange={setDropoff}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -514,7 +529,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
                   type="datetime-local"
                   value={pickupDatetime}
                   onChange={(e) => setPickupDatetime(e.target.value)}
-                  min={new Date(Date.now() + 10 * 60000).toISOString().slice(0, 16)}
+                  min={(() => { const d = new Date(Date.now() + 10 * 60000); const p = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}` })()}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               )}
@@ -524,6 +539,12 @@ export default function CommanderClient({ initialService }: { initialService?: S
           {estimateError && (
             <p role="alert" className="text-sm text-brand-red bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3">
               {estimateError}
+            </p>
+          )}
+
+          {needsDatetime && !pickupDatetime && (
+            <p className="text-xs text-amber-700 dark:text-amber-400 text-center">
+              Choisissez une date et heure de prise en charge
             </p>
           )}
 
@@ -664,7 +685,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
         <ConfirmationScreen
           orderId={orderId}
           service={service}
-          customerName=""
+          customerName={customerName}
           pickup={pickup}
           dropoff={dropoff}
           price={estimate?.price ?? null}
