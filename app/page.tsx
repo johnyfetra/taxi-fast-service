@@ -94,6 +94,13 @@ export default function LandingPage() {
             Commander maintenant
           </Link>
 
+          <Link
+            href="/suivi"
+            className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-brand-black dark:hover:text-white transition-colors underline underline-offset-4 decoration-gray-300 dark:decoration-gray-600"
+          >
+            Suivre une commande →
+          </Link>
+
           <div className="flex items-center gap-2">
             {[
               { icon: '✓', label: 'Prix transparent' },
@@ -219,7 +226,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-6">
             <a
               href={TEL}
-              className="flex items-center gap-1.5 font-medium transition-colors text-white/35 hover:text-white/80"
+              className="flex items-center gap-1.5 font-medium transition-colors text-white/60 hover:text-white"
               style={{ fontSize: '13px' }}
             >
               <IconPhone size={14} />
@@ -230,7 +237,7 @@ export default function LandingPage() {
               href={WA_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 font-medium transition-colors text-white/35 hover:text-white/80"
+              className="flex items-center gap-1.5 font-medium transition-colors text-white/60 hover:text-white"
               style={{ fontSize: '13px' }}
             >
               <IconWhatsApp size={14} />
@@ -238,7 +245,7 @@ export default function LandingPage() {
             </a>
           </div>
 
-          <p className="text-white/20" style={{ fontSize: '11px', letterSpacing: '0.06em' }}>
+          <p className="text-white/50" style={{ fontSize: '11px', letterSpacing: '0.06em' }}>
             © 2025 TAXI FAST SERVICE — ANTANANARIVO
           </p>
         </div>

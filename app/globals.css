@@ -40,6 +40,13 @@
   --color-brand-white: #FFFFFF;
   --color-brand-gray: #F7F7F8;
   --color-brand-gray-dark: #E5E5E7;
+  --color-brand-red-dark: #B0181E;
+  --color-status-success: #16A34A;
+  --color-status-success-bg: #F0FDF4;
+  --color-status-wait: #D97706;
+  --color-status-wait-bg: #FFFBEB;
+  --color-status-error: #DC2626;
+  --color-status-error-bg: #FEF2F2;
   /* theme-aware tokens */
   --color-t-surface: var(--t-surface);
   --color-t-surface-raised: var(--t-surface-raised);

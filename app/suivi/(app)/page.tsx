@@ -72,6 +72,7 @@ export default function SuiviPage() {
   const [codeError, setCodeError] = useState('')
   const [codeSuccess, setCodeSuccess] = useState(false)
   const [savingCode, setSavingCode] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
   const [toast, setToast] = useState<{ title: string; body: string | null } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -90,7 +91,7 @@ export default function SuiviPage() {
         setOrders(d.orders ?? [])
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => { setFetchError(true); setLoading(false) })
   }, [router])
 
   // Realtime notifications for this client
@@ -253,6 +254,27 @@ export default function SuiviPage() {
       <div className="px-4 py-4 flex flex-col gap-4">
         {loading ? (
           <div className="text-center py-16 text-gray-400 text-sm">Chargement…</div>
+        ) : fetchError ? (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-amber-500">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <p className="font-semibold text-brand-black dark:text-white">Impossible de charger vos commandes</p>
+            <p className="text-sm text-gray-400">Vérifiez votre connexion et réessayez.</p>
+            <div className="flex flex-col gap-2 w-full max-w-xs">
+              <button
+                onClick={() => { setFetchError(false); setLoading(true); fetch('/api/suivi/orders').then(async r => { if (r.status === 401) { router.push('/login'); return } const d = await r.json(); setPhone(d.phone ?? ''); setOrders(d.orders ?? []); setLoading(false) }).catch(() => { setFetchError(true); setLoading(false) }) }}
+                className="bg-brand-black dark:bg-white text-white dark:text-brand-black font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity"
+              >
+                Réessayer
+              </button>
+              <a href="tel:+261346143066" className="text-sm text-brand-red font-semibold py-2">
+                Appeler TFS
+              </a>
+            </div>
+          </div>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm dark:bg-[#141416]">

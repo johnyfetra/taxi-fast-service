@@ -31,12 +31,10 @@ export default function PriceDecision({ price, onDecide, onCancel, minPrice, pri
   const [submitting, setSubmitting] = useState(false)
 
   const effectiveReason = reason === 'Autre' ? customReason.trim() : reason
-  const canConfirmCancel = !!effectiveReason
 
   async function handleConfirmCancel() {
-    if (!canConfirmCancel) return
     setSubmitting(true)
-    await onCancel(effectiveReason)
+    await onCancel(effectiveReason || 'Non précisée')
     setSubmitting(false)
   }
 
@@ -84,7 +82,7 @@ export default function PriceDecision({ price, onDecide, onCancel, minPrice, pri
         <button
           type="button"
           onClick={() => setShowCancel(true)}
-          className="text-sm text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors text-center py-1"
+          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors text-center py-2 min-h-[44px] flex items-center justify-center"
         >
           Refuser le tarif
         </button>
@@ -94,7 +92,7 @@ export default function PriceDecision({ price, onDecide, onCancel, minPrice, pri
       {showCancel && (
         <div className="bg-gray-50 dark:bg-[#1C1C1E] border border-gray-200 dark:border-[#2A2A2C] rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-brand-black dark:text-white">Pourquoi refusez-vous ?</p>
+            <p className="text-sm font-semibold text-brand-black dark:text-white">Pourquoi refusez-vous ? <span className="font-normal text-gray-400">(optionnel)</span></p>
             <button
               type="button"
               onClick={() => { setShowCancel(false); setReason(''); setCustomReason('') }}
@@ -143,7 +141,7 @@ export default function PriceDecision({ price, onDecide, onCancel, minPrice, pri
 
           <button
             type="button"
-            disabled={!canConfirmCancel || submitting}
+            disabled={submitting}
             onClick={handleConfirmCancel}
             className="w-full py-2.5 rounded-xl border-2 border-gray-300 dark:border-[#2A2A2C] text-sm font-semibold text-gray-600 dark:text-gray-400 hover:border-red-300 hover:text-brand-red disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
