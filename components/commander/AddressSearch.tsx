@@ -48,6 +48,9 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
+  // En mode bare, on sépare "en train d'éditer" de "isFocused" pour éviter
+  // que des événements indirects (auto-focus arrivée, etc.) cachent le display
+  const [isEditingBare, setIsEditingBare] = useState(false)
   const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -59,6 +62,7 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
   useImperativeHandle(ref, () => ({
     focus: () => {
       setIsFocused(true)
+      if (bare) setIsEditingBare(true)
       setTimeout(() => inputRef.current?.focus(), 50)
     },
   }))
@@ -75,12 +79,15 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
     const updatePos = () => {
       const rect = containerRef.current?.getBoundingClientRect()
       if (!rect) return
-      const margin = 16
-      setDropdownRect({
-        top: rect.bottom + 6,
-        left: margin,
-        width: window.innerWidth - margin * 2,
-      })
+      if (window.innerWidth < 640) {
+        const margin = 16
+        setDropdownRect({ top: rect.bottom + 6, left: margin, width: window.innerWidth - margin * 2 })
+      } else {
+        // Remonter à la carte parente pour aligner le dropdown sur la section trajet
+        const card = containerRef.current?.closest('[class*="rounded-2xl"]') as HTMLElement | null
+        const cardRect = card?.getBoundingClientRect() ?? rect
+        setDropdownRect({ top: rect.bottom + 6, left: cardRect.left, width: cardRect.width })
+      }
     }
     updatePos()
     window.addEventListener('scroll', updatePos, true)
@@ -118,6 +125,7 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
     setSuggestions([])
     setOpen(false)
     setIsFocused(false)
+    setIsEditingBare(false)
     onChange({ label: item.label, lat: item.lat, lng: item.lng })
   }, [onChange])
 
@@ -126,15 +134,19 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
       if (!listPointerDownRef.current) {
         setOpen(false)
         setIsFocused(false)
+        setIsEditingBare(false)
         setQuery(value?.label ?? '')
       }
     }, 200)
   }, [value?.label])
 
-  const showDisplay = !!value && !isFocused
+  // En mode bare : n'affiche le display que si une valeur est confirmée ET l'utilisateur n'édite pas activement
+  // (isEditingBare, pas isFocused — pour éviter que l'auto-focus arrivée cache le départ)
+  const showDisplay = bare ? (!!value && !isEditingBare) : (!!value && !isFocused)
 
   const openDisplay = () => {
     setIsFocused(true)
+    if (bare) setIsEditingBare(true)
     setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select() }, 0)
   }
 
@@ -168,7 +180,7 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
           type="text"
           value={query}
           onChange={(e) => handleInput(e.target.value)}
-          onFocus={() => { setIsFocused(true); if (suggestions.length > 0) setOpen(true) }}
+          onFocus={() => { setIsFocused(true); if (bare) setIsEditingBare(true); if (suggestions.length > 0) setOpen(true) }}
           onBlur={handleBlur}
           placeholder={placeholder ?? 'Rechercher une adresse…'}
           aria-label={label ?? placeholder ?? 'Adresse'}

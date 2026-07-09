@@ -296,7 +296,11 @@ export default function CommanderClient({ initialService }: { initialService?: S
               <div className="flex-1 min-w-0 py-3.5 pr-3">
                 <AddressSearch
                   bare
-                  placeholder="D'où partez-vous ?"
+                  placeholder={
+                    service === 'colis' ? 'Point de récupération' :
+                    service === 'courses' ? 'Adresse de livraison' :
+                    "D'où partez-vous ?"
+                  }
                   value={pickup}
                   onChange={setPickup}
                 />
@@ -338,7 +342,10 @@ export default function CommanderClient({ initialService }: { initialService?: S
                   <AddressSearch
                     ref={dropoffRef}
                     bare
-                    placeholder="Où voulez-vous aller ?"
+                    placeholder={
+                      service === 'colis' ? 'Point de livraison' :
+                      "Où voulez-vous aller ?"
+                    }
                     value={dropoff}
                     onChange={setDropoff}
                   />

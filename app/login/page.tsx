@@ -107,6 +107,18 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-brand-gray dark:bg-[#0A0A0B] flex items-center justify-center p-4 relative">
+      <div className="absolute top-4 left-4">
+        <a
+          href="/"
+          className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-brand-black dark:hover:text-white transition-colors"
+          aria-label="Retour à l'accueil"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Accueil
+        </a>
+      </div>
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
@@ -132,34 +144,46 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div role="alert" className="bg-red-50 border border-red-200 text-brand-red text-sm rounded-xl px-4 py-3 text-center">
+          <div id="login-error" role="alert" className="bg-red-50 border border-red-200 text-brand-red text-sm rounded-xl px-4 py-3 text-center">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email ou téléphone</label>
+            <label htmlFor="login-identity" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Email ou téléphone
+            </label>
             <input
+              id="login-identity"
               type="text"
               autoComplete="username"
               value={identity}
               onChange={e => setIdentity(e.target.value)}
               placeholder="Email ou 0XX XXX XXX"
               required
+              aria-required="true"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'login-error' : undefined}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-sm transition-all"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe / PIN / Code</label>
+            <label htmlFor="login-password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Mot de passe / PIN / Code
+            </label>
             <div className="relative">
               <input
+                id="login-password"
                 type={showPwd ? 'text' : 'password'}
                 autoComplete="current-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
+                aria-required="true"
+                aria-invalid={!!error}
+                aria-describedby={error ? 'login-error' : undefined}
                 className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-sm transition-all"
               />
               <button
