@@ -81,8 +81,11 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
       if (!rect) return
       const card = containerRef.current?.closest('[class*="rounded-2xl"]') as HTMLElement | null
       const cardRect = card?.getBoundingClientRect() ?? rect
-      // Ancre = bas du champ actif + 10px d'espace visuel
-      const top = rect.bottom + 10
+      // Remonter à la ligne (flex items-center) pour avoir le vrai bas visuel du champ
+      // containerRef → .flex-1 wrapper → ligne row
+      const rowEl = containerRef.current?.parentElement?.parentElement
+      const rowBottom = rowEl?.getBoundingClientRect().bottom ?? rect.bottom
+      const top = rowBottom + 8
       if (window.innerWidth < 640) {
         const margin = 16
         setDropdownRect({ top, left: margin, width: window.innerWidth - margin * 2 })
