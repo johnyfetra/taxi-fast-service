@@ -265,14 +265,13 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
           `<div style="` +
             `position:absolute;transform:translate(-50%,-50%);` +
             `display:flex;align-items:center;gap:7px;white-space:nowrap;` +
-            `background:rgba(13,13,15,0.88);` +
-            `backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);` +
+            `background:#D81F26;` +
             `border-radius:12px;padding:7px 13px;` +
-            `box-shadow:0 4px 20px rgba(0,0,0,0.38);` +
+            `box-shadow:0 4px 20px rgba(216,31,38,0.45);` +
           `">` +
             `<span style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.02em">${fmtDur}</span>` +
-            `<span style="width:1px;height:14px;background:rgba(255,255,255,0.2);display:inline-block"></span>` +
-            `<span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.65)">${result.distance_km}&nbsp;km</span>` +
+            `<span style="width:1px;height:14px;background:rgba(255,255,255,0.35);display:inline-block"></span>` +
+            `<span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85)">${result.distance_km}&nbsp;km</span>` +
           `</div>` +
         `</div>`
 
