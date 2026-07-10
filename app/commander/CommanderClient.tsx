@@ -72,8 +72,33 @@ export default function CommanderClient({ initialService }: { initialService?: S
   const [geolocating, setGeolocating] = useState(false)
   const [geoError, setGeoError] = useState('')
   const [customerName, setCustomerName] = useState('')
+  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null)
+  const [userLabel, setUserLabel] = useState<string | null>(null)
   const dropoffRef = useRef<AddressSearchHandle>(null)
   const prevPickupRef = useRef<Location | null>(null)
+  const userPosAskedRef = useRef(false)
+
+  // Géolocalisation silencieuse + reverse geocode pour afficher le nom du lieu sur la carte
+  useEffect(() => {
+    if (step !== 'addresses' || service === 'courses' || userPosAskedRef.current) return
+    if (!navigator.geolocation) return
+    userPosAskedRef.current = true
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        setUserPosition({ lat, lng })
+        try {
+          const res = await fetch(`/api/geocode?type=reverse&lat=${lat}&lng=${lng}`)
+          if (res.ok) {
+            const feat = await res.json()
+            if (feat?.label) setUserLabel(feat.label)
+          }
+        } catch { /* silencieux */ }
+      },
+      () => {}
+    )
+  }, [step, service])
 
   // Auto-focus arrivée dès que le départ est renseigné pour la première fois
   useEffect(() => {
@@ -282,8 +307,23 @@ export default function CommanderClient({ initialService }: { initialService?: S
             {service === 'taxi' ? 'Votre trajet' : service === 'colis' ? 'Livraison de colis' : 'Votre commande de courses'}
           </h1>
 
-          {/* Carte adresses — style itinéraire compact (inDrive / Google Maps) */}
-          <div className="bg-white dark:bg-[#141416] rounded-2xl shadow-sm border border-gray-100 dark:border-[#1E1E20] overflow-hidden transition-[border-color,box-shadow] focus-within:border-gray-300 dark:focus-within:border-[#3A3A3C] focus-within:shadow-md dark:focus-within:shadow-black/30">
+          {/* Carte toujours visible — centrée sur l'utilisateur dès le départ */}
+          {service !== 'courses' && (
+            <div className="mb-[-44px]">
+              <LeafletMap
+                pickup={pickup}
+                dropoff={dropoff}
+                onPickupChange={setPickup}
+                onDropoffChange={setDropoff}
+                userPosition={userPosition}
+                userLabel={userLabel}
+              />
+            </div>
+          )}
+
+          {/* Carte adresses — remonte par-dessus la carte (effet inDrive / Uber) */}
+          {/* z-[1000] : Leaflet utilise jusqu'à 800 pour ses contrôles */}
+          <div className="relative z-[1000] bg-white dark:bg-[#141416] rounded-2xl shadow-lg dark:shadow-black/40 border border-gray-100 dark:border-[#1E1E20] overflow-hidden transition-[border-color,box-shadow] focus-within:border-gray-300 dark:focus-within:border-[#3A3A3C] focus-within:shadow-xl dark:focus-within:shadow-black/50">
 
             {/* Ligne Départ */}
             <div className="flex items-center min-h-[56px]">
@@ -353,16 +393,6 @@ export default function CommanderClient({ initialService }: { initialService?: S
               </div>
             )}
           </div>
-
-          {/* Carte — visible dès qu'un point est placé */}
-          {(pickup || dropoff) && service !== 'courses' && (
-            <LeafletMap
-              pickup={pickup}
-              dropoff={dropoff}
-              onPickupChange={setPickup}
-              onDropoffChange={setDropoff}
-            />
-          )}
 
           {/* Options colis */}
           {service === 'colis' && (

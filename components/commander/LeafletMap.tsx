@@ -7,6 +7,8 @@ interface Props {
   dropoff: Location | null
   onPickupChange: (loc: Location) => void
   onDropoffChange: (loc: Location) => void
+  userPosition?: { lat: number; lng: number } | null
+  userLabel?: string | null
 }
 
 const TANA_CENTER: [number, number] = [-18.9137, 47.5361]
@@ -20,7 +22,58 @@ const PIN_SVG = (color: string) =>
     <circle cx="14" cy="14" r="5" fill="white" opacity="0.9"/>
   </svg>`
 
-export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffChange }: Props) {
+// Marqueur "Vous ici" — design moderne glassmorphism + CTA compact
+function buildYouHereHTML(label?: string | null): string {
+  const addr = label ? label.split(',')[0] : ''
+  const addrLine = addr
+    ? `<div style="font-size:10.5px;color:#9ca3af;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:172px">${addr}</div>`
+    : ''
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:0;pointer-events:auto;user-select:none;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.18))">
+    <div style="
+      background:rgba(255,255,255,0.97);
+      border-radius:20px;
+      padding:10px 12px 9px;
+      font-family:system-ui,-apple-system,sans-serif;
+      min-width:170px;max-width:200px;
+      border:1px solid rgba(0,0,0,0.06);
+    ">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:${addr ? '3px' : '8px'}">
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="7" r="4" fill="white"/>
+            <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:12.5px;font-weight:800;color:#111827;letter-spacing:-0.02em;line-height:1.1">Vous êtes ici</div>
+          ${addrLine}
+        </div>
+      </div>
+      <button class="you-use-as-pickup" style="
+        width:100%;padding:7px 12px;border-radius:12px;
+        background:linear-gradient(135deg,#D81F26,#b91c1c);
+        color:white;border:none;cursor:pointer;
+        font-size:11.5px;font-weight:700;font-family:inherit;
+        display:flex;align-items:center;justify-content:center;gap:5px;
+        letter-spacing:0.01em;
+        box-shadow:0 2px 8px rgba(216,31,38,0.35);
+      ">
+        Partir d'ici
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </div>
+    <div style="width:2px;height:7px;background:rgba(0,0,0,0.15)"></div>
+    <div style="position:relative;width:14px;height:14px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;width:28px;height:28px;border-radius:50%;background:#3B82F6;opacity:0.2;animation:youPulse 2s ease-out infinite;pointer-events:none"></div>
+      <div style="width:13px;height:13px;border-radius:50%;background:#3B82F6;border:2.5px solid white;box-shadow:0 2px 8px rgba(59,130,246,0.55)"></div>
+    </div>
+    <style>@keyframes youPulse{0%{transform:scale(1);opacity:.25}70%{transform:scale(2.6);opacity:0}100%{transform:scale(2.6);opacity:0}}</style>
+  </div>`
+}
+
+export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffChange, userPosition, userLabel }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstanceRef = useRef<any>(null)
@@ -28,6 +81,8 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   const pickupMarkerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dropoffMarkerRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userMarkerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const routeLayerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,10 +93,14 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   // Miroir des props pour que initMap() puisse lire les valeurs initiales sans deps
   const pickupRef = useRef<Location | null>(pickup)
   const dropoffRef = useRef<Location | null>(dropoff)
+  const userPositionRef = useRef(userPosition)
+  const userLabelRef = useRef(userLabel)
   const onPickupChangeRef = useRef(onPickupChange)
   const onDropoffChangeRef = useRef(onDropoffChange)
   pickupRef.current = pickup
   dropoffRef.current = dropoff
+  userPositionRef.current = userPosition
+  userLabelRef.current = userLabel
   onPickupChangeRef.current = onPickupChange
   onDropoffChangeRef.current = onDropoffChange
 
@@ -78,12 +137,46 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
         maxZoom: 19,
       }).addTo(map)
 
-      map.setView(TANA_CENTER, ZOOM)
+      // Démarrer vue monde puis fly vers la position — effet réaliste
+      map.setView([0, 25], 2)
 
       const redIcon = makeIcon('#D81F26')
       const blueIcon = makeIcon('#1F6ED8')
+      const makeYouIcon = (label?: string | null) => L.divIcon({
+        html: buildYouHereHTML(label),
+        className: '',
+        iconSize: [220, 80],
+        iconAnchor: [110, 80],
+      })
 
-      mapInstanceRef.current = { L, map, redIcon, blueIcon }
+      mapInstanceRef.current = { L, map, redIcon, blueIcon, makeYouIcon }
+
+      // Si userPosition déjà connue au moment de l'init, fly avec délai (après rendu)
+      const initUserPos = userPositionRef.current
+      if (initUserPos && !pickupRef.current && !dropoffRef.current) {
+        setTimeout(() => {
+          map.flyTo([initUserPos.lat, initUserPos.lng], 15, { animate: true, duration: 2.2, easeLinearity: 0.12 })
+        }, 300)
+        const m = L.marker([initUserPos.lat, initUserPos.lng], {
+          icon: makeYouIcon(userLabelRef.current),
+          interactive: true,
+          keyboard: false,
+          zIndexOffset: 500,
+        }).addTo(map)
+        // CTA "Utiliser comme départ"
+        const el = m.getElement()
+        if (el) {
+          const btn = el.querySelector('.you-use-as-pickup') as HTMLElement | null
+          if (btn) {
+            L.DomEvent.on(btn, 'click', (e) => {
+              L.DomEvent.stopPropagation(e)
+              const p = userPositionRef.current
+              if (p) onPickupChangeRef.current({ label: userLabelRef.current ?? 'Ma position', lat: p.lat, lng: p.lng })
+            })
+          }
+        }
+        userMarkerRef.current = m
+      }
 
       // Clic sur la carte → poser l'arrivée si pas encore définie, sinon le départ
       map.on('click', async (e: { latlng: { lat: number; lng: number } }) => {
@@ -151,6 +244,48 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
     // onPickupChange / onDropoffChange sont des callbacks stables (useCallback dans le parent)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Marqueur "Vous ici" — réactif si la géoloc arrive après l'init de la carte
+  useEffect(() => {
+    const instance = mapInstanceRef.current
+    if (!instance || !userPosition) return
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove()
+      userMarkerRef.current = null
+    }
+
+    const m = instance.L.marker([userPosition.lat, userPosition.lng], {
+      icon: instance.makeYouIcon(userLabelRef.current),
+      interactive: true,
+      keyboard: false,
+      zIndexOffset: 500,
+    }).addTo(instance.map)
+
+    // CTA "Utiliser comme départ"
+    const el = m.getElement()
+    if (el) {
+      const btn = el.querySelector('.you-use-as-pickup') as HTMLElement | null
+      if (btn) {
+        instance.L.DomEvent.on(btn, 'click', (e: Event) => {
+          instance.L.DomEvent.stopPropagation(e)
+          const p = userPositionRef.current
+          if (p) onPickupChangeRef.current({ label: userLabelRef.current ?? 'Ma position', lat: p.lat, lng: p.lng })
+        })
+      }
+    }
+    userMarkerRef.current = m
+
+    // Fly vers la position — effet monde → local
+    if (!pickupRef.current && !dropoffRef.current) {
+      instance.map.flyTo([userPosition.lat, userPosition.lng], 15, {
+        animate: true,
+        duration: 2.2,
+        easeLinearity: 0.12,
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPosition])
 
   // Mettre à jour le marqueur de départ
   useEffect(() => {
@@ -299,8 +434,8 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   return (
     <div
       ref={mapRef}
-      className="w-full rounded-2xl overflow-hidden border border-gray-200 shadow-sm"
-      style={{ height: '240px' }}
+      className="w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2A2A2C] shadow-sm"
+      style={{ height: '360px' }}
       aria-label="Carte de la course"
     />
   )
