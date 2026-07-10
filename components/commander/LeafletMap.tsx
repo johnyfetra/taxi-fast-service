@@ -249,49 +249,48 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
         ? `${Math.floor(dur / 60)}h${dur % 60 > 0 ? `&nbsp;${dur % 60}min` : ''}`
         : `${dur}&nbsp;min`
 
-      const InfoControl = instance.L.Control.extend({
-        onAdd() {
-          const wrap = instance.L.DomUtil.create('div')
-          wrap.setAttribute('style', [
-            'display:flex',
-            'gap:6px',
-            'align-items:stretch',
-            'pointer-events:none',
-            'margin:8px',
-          ].join(';'))
+      // Label positionné au milieu du tracé
+      let midLat = (pickup.lat + dropoff.lat) / 2
+      let midLng = (pickup.lng + dropoff.lng) / 2
+      if (result.geometry?.type === 'LineString') {
+        const coords = result.geometry.coordinates as [number, number][]
+        if (coords.length > 0) {
+          const m = coords[Math.floor(coords.length / 2)]
+          midLng = m[0]; midLat = m[1]
+        }
+      }
 
-          const pill = (icon: string, value: string, sub: string) => {
-            const el = document.createElement('div')
-            el.setAttribute('style', [
-              'background:rgba(13,13,15,0.82)',
-              'backdrop-filter:blur(8px)',
-              '-webkit-backdrop-filter:blur(8px)',
-              'border-radius:12px',
-              'padding:7px 12px',
-              'display:flex',
-              'align-items:center',
-              'gap:7px',
-              'box-shadow:0 4px 16px rgba(0,0,0,0.28)',
-            ].join(';'))
-            el.innerHTML =
-              `<span style="font-size:18px;line-height:1">${icon}</span>` +
-              `<span style="display:flex;flex-direction:column;line-height:1.15">` +
-                `<span style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.02em">${value}</span>` +
-                `<span style="font-size:10px;font-weight:500;color:rgba(255,255,255,0.5);letter-spacing:0.04em;text-transform:uppercase">${sub}</span>` +
-              `</span>`
-            return el
-          }
+      const labelHtml =
+        `<div style="position:relative;width:0;height:0">` +
+          `<div style="` +
+            `position:absolute;transform:translate(-50%,-50%);` +
+            `display:flex;align-items:center;gap:7px;white-space:nowrap;` +
+            `background:rgba(13,13,15,0.88);` +
+            `backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);` +
+            `border-radius:12px;padding:7px 13px;` +
+            `box-shadow:0 4px 20px rgba(0,0,0,0.38);` +
+          `">` +
+            `<span style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.02em">${fmtDur}</span>` +
+            `<span style="width:1px;height:14px;background:rgba(255,255,255,0.2);display:inline-block"></span>` +
+            `<span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.65)">${result.distance_km}&nbsp;km</span>` +
+          `</div>` +
+        `</div>`
 
-          wrap.appendChild(pill('🕐', fmtDur, 'durée'))
-          wrap.appendChild(pill('📍', `${result.distance_km} km`, 'distance'))
-          return wrap
-        },
-        onRemove() {},
+      const labelIcon = instance.L.divIcon({
+        html: labelHtml,
+        className: '',
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
       })
 
-      const control = new InfoControl({ position: 'bottomleft' })
-      control.addTo(instance.map)
-      routeControlRef.current = control
+      const labelMarker = instance.L.marker([midLat, midLng], {
+        icon: labelIcon,
+        interactive: false,
+        keyboard: false,
+        zIndexOffset: 1000,
+      }).addTo(instance.map)
+
+      routeControlRef.current = labelMarker
     }
 
     drawRoute()
