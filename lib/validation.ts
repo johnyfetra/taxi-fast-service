@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const PhoneSchema = z
   .string()
-  .regex(/^03[0-9] [0-9]{2} [0-9]{3} [0-9]{2}$/, 'Format attendu : 03X XX XXX XX')
+  .regex(/^03[0-9]{8}$/, 'Format attendu : 03XXXXXXXX')
 
 export const CoordsSchema = z.object({
   lat: z.number().min(-90).max(90),

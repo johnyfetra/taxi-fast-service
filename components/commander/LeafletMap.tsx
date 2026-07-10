@@ -34,6 +34,15 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   const routeControlRef = useRef<any>(null)
   // Guard synchrone pour React StrictMode (double-invocation des effects en dev)
   const initializingRef = useRef(false)
+  // Miroir des props pour que initMap() puisse lire les valeurs initiales sans deps
+  const pickupRef = useRef<Location | null>(pickup)
+  const dropoffRef = useRef<Location | null>(dropoff)
+  const onPickupChangeRef = useRef(onPickupChange)
+  const onDropoffChangeRef = useRef(onDropoffChange)
+  pickupRef.current = pickup
+  dropoffRef.current = dropoff
+  onPickupChangeRef.current = onPickupChange
+  onDropoffChangeRef.current = onDropoffChange
 
   useEffect(() => {
     if (!mapRef.current) return
@@ -70,12 +79,10 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
 
       map.setView(TANA_CENTER, ZOOM)
 
-      mapInstanceRef.current = {
-        L,
-        map,
-        redIcon: makeIcon('#D81F26'),
-        blueIcon: makeIcon('#1F6ED8'),
-      }
+      const redIcon = makeIcon('#D81F26')
+      const blueIcon = makeIcon('#1F6ED8')
+
+      mapInstanceRef.current = { L, map, redIcon, blueIcon }
 
       // Clic sur la carte → poser l'arrivée si pas encore définie, sinon le départ
       map.on('click', async (e: { latlng: { lat: number; lng: number } }) => {
@@ -84,11 +91,51 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
         const feat = await reverseGeocode(lat, lng)
         const label = feat?.label ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`
         if (!dropoffMarkerRef.current) {
-          onDropoffChange({ label, lat, lng })
+          onDropoffChangeRef.current({ label, lat, lng })
         } else {
-          onPickupChange({ label, lat, lng })
+          onPickupChangeRef.current({ label, lat, lng })
         }
       })
+
+      // Placer les marqueurs déjà définis au moment de l'init (évite la race condition)
+      const initPickup = pickupRef.current
+      const initDropoff = dropoffRef.current
+
+      if (initPickup) {
+        const m = L.marker([initPickup.lat, initPickup.lng], { icon: redIcon, draggable: true })
+          .addTo(map)
+          .bindTooltip('Départ', { permanent: false, direction: 'top' })
+        m.on('dragend', async () => {
+          const pos = m.getLatLng()
+          const { reverseGeocode } = await import('@/lib/photon')
+          const feat = await reverseGeocode(pos.lat, pos.lng)
+          const label = feat?.label ?? `${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`
+          onPickupChangeRef.current({ label, lat: pos.lat, lng: pos.lng })
+        })
+        pickupMarkerRef.current = m
+        if (!initDropoff) map.setView([initPickup.lat, initPickup.lng], Math.max(map.getZoom(), 15))
+      }
+
+      if (initDropoff) {
+        const m = L.marker([initDropoff.lat, initDropoff.lng], { icon: blueIcon, draggable: true })
+          .addTo(map)
+          .bindTooltip('Arrivée', { permanent: false, direction: 'top' })
+        m.on('dragend', async () => {
+          const pos = m.getLatLng()
+          const { reverseGeocode } = await import('@/lib/photon')
+          const feat = await reverseGeocode(pos.lat, pos.lng)
+          const label = feat?.label ?? `${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`
+          onDropoffChangeRef.current({ label, lat: pos.lat, lng: pos.lng })
+        })
+        dropoffMarkerRef.current = m
+      }
+
+      if (initPickup && initDropoff) {
+        map.fitBounds(
+          [[initPickup.lat, initPickup.lng], [initDropoff.lat, initDropoff.lng]],
+          { padding: [48, 48], maxZoom: 16 }
+        )
+      }
     }
 
     initMap()
