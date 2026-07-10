@@ -32,6 +32,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   const routeLayerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const routeControlRef = useRef<any>(null)
+  const routeReqRef = useRef(0)
   // Guard synchrone pour React StrictMode (double-invocation des effects en dev)
   const initializingRef = useRef(false)
   // Miroir des props pour que initMap() puisse lire les valeurs initiales sans deps
@@ -229,9 +230,11 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
     }
     if (!pickup || !dropoff) return
 
+    const reqId = ++routeReqRef.current
     const drawRoute = async () => {
       const { getRoute } = await import('@/lib/osrm')
       const result = await getRoute(pickup, dropoff)
+      if (routeReqRef.current !== reqId) return // résultat obsolète, une requête plus récente a pris le relais
       const instance = mapInstanceRef.current
       if (!instance) return
 
