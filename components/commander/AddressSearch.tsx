@@ -79,16 +79,15 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
     const updatePos = () => {
       const rect = containerRef.current?.getBoundingClientRect()
       if (!rect) return
-      // Utiliser le bas de la carte parente (pas du champ individuel) pour ne pas
-      // couvrir le champ arrivée situé en dessous dans la même carte
       const card = containerRef.current?.closest('[class*="rounded-2xl"]') as HTMLElement | null
-      const anchorBottom = (card?.getBoundingClientRect() ?? rect).bottom
+      const cardRect = card?.getBoundingClientRect() ?? rect
+      // Ancre = bas du champ actif + 10px d'espace visuel
+      const top = rect.bottom + 10
       if (window.innerWidth < 640) {
         const margin = 16
-        setDropdownRect({ top: anchorBottom + 8, left: margin, width: window.innerWidth - margin * 2 })
+        setDropdownRect({ top, left: margin, width: window.innerWidth - margin * 2 })
       } else {
-        const cardRect = card?.getBoundingClientRect() ?? rect
-        setDropdownRect({ top: anchorBottom + 8, left: cardRect.left, width: cardRect.width })
+        setDropdownRect({ top, left: cardRect.left, width: cardRect.width })
       }
     }
     updatePos()
