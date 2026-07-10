@@ -22,49 +22,24 @@ const PIN_SVG = (color: string) =>
     <circle cx="14" cy="14" r="5" fill="white" opacity="0.9"/>
   </svg>`
 
-// Marqueur "Vous ici" — design moderne glassmorphism + CTA compact
-function buildYouHereHTML(label?: string | null): string {
-  const addr = label ? label.split(',')[0] : ''
-  const addrLine = addr
-    ? `<div style="font-size:10.5px;color:#9ca3af;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:172px">${addr}</div>`
-    : ''
-  return `<div style="display:flex;flex-direction:column;align-items:center;gap:0;pointer-events:auto;user-select:none;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.18))">
-    <div style="
-      background:rgba(255,255,255,0.97);
-      border-radius:20px;
-      padding:10px 12px 9px;
-      font-family:system-ui,-apple-system,sans-serif;
-      min-width:170px;max-width:200px;
-      border:1px solid rgba(0,0,0,0.06);
+// Marqueur "Vous ici" — juste le point pulsant + CTA compact, sans carte
+function buildYouHereHTML(): string {
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:0;pointer-events:auto;user-select:none">
+    <button class="you-use-as-pickup" style="
+      padding:6px 11px;border-radius:20px;margin-bottom:5px;
+      background:linear-gradient(135deg,#D81F26,#b91c1c);
+      color:white;border:none;cursor:pointer;
+      font-size:11px;font-weight:700;font-family:system-ui,-apple-system,sans-serif;
+      display:flex;align-items:center;gap:5px;
+      box-shadow:0 2px 10px rgba(216,31,38,0.4);
+      white-space:nowrap;
     ">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:${addr ? '3px' : '8px'}">
-        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="7" r="4" fill="white"/>
-            <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <div>
-          <div style="font-size:12.5px;font-weight:800;color:#111827;letter-spacing:-0.02em;line-height:1.1">Vous êtes ici</div>
-          ${addrLine}
-        </div>
-      </div>
-      <button class="you-use-as-pickup" style="
-        width:100%;padding:7px 12px;border-radius:12px;
-        background:linear-gradient(135deg,#D81F26,#b91c1c);
-        color:white;border:none;cursor:pointer;
-        font-size:11.5px;font-weight:700;font-family:inherit;
-        display:flex;align-items:center;justify-content:center;gap:5px;
-        letter-spacing:0.01em;
-        box-shadow:0 2px 8px rgba(216,31,38,0.35);
-      ">
-        Partir d'ici
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-        </svg>
-      </button>
-    </div>
-    <div style="width:2px;height:7px;background:rgba(0,0,0,0.15)"></div>
+      Partir d'ici
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </button>
+    <div style="width:2px;height:6px;background:rgba(0,0,0,0.18)"></div>
     <div style="position:relative;width:14px;height:14px;display:flex;align-items:center;justify-content:center">
       <div style="position:absolute;width:28px;height:28px;border-radius:50%;background:#3B82F6;opacity:0.2;animation:youPulse 2s ease-out infinite;pointer-events:none"></div>
       <div style="width:13px;height:13px;border-radius:50%;background:#3B82F6;border:2.5px solid white;box-shadow:0 2px 8px rgba(59,130,246,0.55)"></div>
@@ -142,11 +117,11 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
 
       const redIcon = makeIcon('#D81F26')
       const blueIcon = makeIcon('#1F6ED8')
-      const makeYouIcon = (label?: string | null) => L.divIcon({
-        html: buildYouHereHTML(label),
+      const makeYouIcon = () => L.divIcon({
+        html: buildYouHereHTML(),
         className: '',
-        iconSize: [220, 80],
-        iconAnchor: [110, 80],
+        iconSize: [120, 60],
+        iconAnchor: [60, 60],
       })
 
       mapInstanceRef.current = { L, map, redIcon, blueIcon, makeYouIcon }
@@ -158,7 +133,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
           map.flyTo([initUserPos.lat, initUserPos.lng], 15, { animate: true, duration: 2.2, easeLinearity: 0.12 })
         }, 300)
         const m = L.marker([initUserPos.lat, initUserPos.lng], {
-          icon: makeYouIcon(userLabelRef.current),
+          icon: makeYouIcon(),
           interactive: true,
           keyboard: false,
           zIndexOffset: 500,
@@ -172,6 +147,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
               L.DomEvent.stopPropagation(e)
               const p = userPositionRef.current
               if (p) onPickupChangeRef.current({ label: userLabelRef.current ?? 'Ma position', lat: p.lat, lng: p.lng })
+              if (userMarkerRef.current) { userMarkerRef.current.remove(); userMarkerRef.current = null }
             })
           }
         }
@@ -256,7 +232,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
     }
 
     const m = instance.L.marker([userPosition.lat, userPosition.lng], {
-      icon: instance.makeYouIcon(userLabelRef.current),
+      icon: instance.makeYouIcon(),
       interactive: true,
       keyboard: false,
       zIndexOffset: 500,
@@ -271,6 +247,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
           instance.L.DomEvent.stopPropagation(e)
           const p = userPositionRef.current
           if (p) onPickupChangeRef.current({ label: userLabelRef.current ?? 'Ma position', lat: p.lat, lng: p.lng })
+          if (userMarkerRef.current) { userMarkerRef.current.remove(); userMarkerRef.current = null }
         })
       }
     }
@@ -431,12 +408,52 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pickup?.lat, pickup?.lng, dropoff?.lat, dropoff?.lng])
 
+  const labelParts = userLabel ? userLabel.split(',').map(s => s.trim()) : []
+  const street = labelParts[0] ?? null
+  const district = labelParts[1] ?? null
+
   return (
-    <div
-      ref={mapRef}
-      className="w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2A2A2C] shadow-sm"
-      style={{ height: '360px' }}
-      aria-label="Carte de la course"
-    />
+    <div className="relative w-full">
+      {!pickup && (street || district) && (
+        <div
+          className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 px-3.5 py-2 rounded-2xl pointer-events-none"
+          style={{
+            background: 'rgba(255,255,255,0.82)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.6)',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.09)',
+            maxWidth: 'calc(100% - 32px)',
+          }}
+        >
+          {/* Icône GPS moderne — cercle plein + anneau */}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" fill="#3b82f6" />
+            <circle cx="12" cy="12" r="8" stroke="#3b82f6" strokeWidth="1.5" opacity="0.3" />
+            <line x1="12" y1="2" x2="12" y2="5" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="12" y1="19" x2="12" y2="22" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="2" y1="12" x2="5" y2="12" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
+            <line x1="19" y1="12" x2="22" y2="12" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          <span className="truncate" style={{ maxWidth: '230px', letterSpacing: '-0.01em' }}>
+            {street && (
+              <span className="text-[11.5px] text-gray-500">{street}</span>
+            )}
+            {street && district && (
+              <span className="text-[11.5px] text-gray-400"> · </span>
+            )}
+            {district && (
+              <span className="text-[12px] font-bold text-gray-800">{district}</span>
+            )}
+          </span>
+        </div>
+      )}
+      <div
+        ref={mapRef}
+        className="w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2A2A2C] shadow-sm"
+        style={{ height: '360px' }}
+        aria-label="Carte de la course"
+      />
+    </div>
   )
 }
