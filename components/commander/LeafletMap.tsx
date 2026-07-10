@@ -263,7 +263,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       const labelHtml =
         `<div style="position:relative;width:0;height:0">` +
           `<div style="` +
-            `position:absolute;transform:translate(-50%,-50%);` +
+            `position:absolute;transform:translate(-50%, calc(-100% - 8px));` +
             `display:flex;align-items:center;gap:7px;white-space:nowrap;` +
             `background:#D81F26;` +
             `border-radius:12px;padding:7px 13px;` +
