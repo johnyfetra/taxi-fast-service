@@ -251,30 +251,40 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
 
       const InfoControl = instance.L.Control.extend({
         onAdd() {
-          const div = instance.L.DomUtil.create('div')
-          div.setAttribute('style', [
-            'background:rgba(255,255,255,0.95)',
-            'backdrop-filter:blur(6px)',
-            'border-radius:10px',
-            'padding:5px 12px',
+          const wrap = instance.L.DomUtil.create('div')
+          wrap.setAttribute('style', [
             'display:flex',
-            'gap:10px',
-            'align-items:center',
-            'font-size:13px',
-            'font-weight:700',
-            'color:#0D0D0F',
-            'box-shadow:0 2px 10px rgba(0,0,0,0.18)',
-            'border:1px solid rgba(0,0,0,0.07)',
+            'gap:6px',
+            'align-items:stretch',
             'pointer-events:none',
             'margin:8px',
           ].join(';'))
-          const routeIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D81F26" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15"/><circle cx="18" cy="5" r="3"/></svg>`
-          const clockIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D81F26" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 15.5"/></svg>`
-          div.innerHTML =
-            `<span style="display:inline-flex;align-items:center;gap:5px">${routeIcon}&nbsp;${result.distance_km}&nbsp;km</span>` +
-            `<span style="width:1px;height:14px;background:#E5E7EB;display:inline-block"></span>` +
-            `<span style="display:inline-flex;align-items:center;gap:5px">${clockIcon}&nbsp;${fmtDur}</span>`
-          return div
+
+          const pill = (icon: string, value: string, sub: string) => {
+            const el = document.createElement('div')
+            el.setAttribute('style', [
+              'background:rgba(13,13,15,0.82)',
+              'backdrop-filter:blur(8px)',
+              '-webkit-backdrop-filter:blur(8px)',
+              'border-radius:12px',
+              'padding:7px 12px',
+              'display:flex',
+              'align-items:center',
+              'gap:7px',
+              'box-shadow:0 4px 16px rgba(0,0,0,0.28)',
+            ].join(';'))
+            el.innerHTML =
+              `<span style="font-size:18px;line-height:1">${icon}</span>` +
+              `<span style="display:flex;flex-direction:column;line-height:1.15">` +
+                `<span style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.02em">${value}</span>` +
+                `<span style="font-size:10px;font-weight:500;color:rgba(255,255,255,0.5);letter-spacing:0.04em;text-transform:uppercase">${sub}</span>` +
+              `</span>`
+            return el
+          }
+
+          wrap.appendChild(pill('🕐', fmtDur, 'durée'))
+          wrap.appendChild(pill('📍', `${result.distance_km} km`, 'distance'))
+          return wrap
         },
         onRemove() {},
       })
