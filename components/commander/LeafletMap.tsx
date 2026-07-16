@@ -14,12 +14,14 @@ interface Props {
 const TANA_CENTER: [number, number] = [-18.9137, 47.5361]
 const ZOOM = 13
 
-// Pin SVG minimaliste — rouge pour départ, bleu pour arrivée
-const PIN_SVG = (color: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
-    <path d="M14 0C6.27 0 0 6.27 0 14c0 9.625 14 22 14 22S28 23.625 28 14C28 6.27 21.73 0 14 0z"
-      fill="${color}" stroke="white" stroke-width="2"/>
-    <circle cx="14" cy="14" r="5" fill="white" opacity="0.9"/>
+// Pin SVG avec lettre — A rouge pour départ, B bleu pour arrivée
+const PIN_SVG = (color: string, letter: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+    <path d="M16 0C7.16 0 0 7.16 0 16c0 11 16 26 16 26S32 27 32 16C32 7.16 24.84 0 16 0z"
+      fill="${color}" stroke="white" stroke-width="2.5"/>
+    <text x="16" y="21" text-anchor="middle" dominant-baseline="middle"
+      font-family="system-ui,-apple-system,sans-serif"
+      font-size="14" font-weight="800" fill="white" letter-spacing="0">${letter}</text>
   </svg>`
 
 // Marqueur "Vous ici" — juste le point pulsant + CTA compact, sans carte
@@ -96,13 +98,13 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((mapRef.current as any)._leaflet_id) { initializingRef.current = false; return }
 
-      const makeIcon = (color: string) =>
+      const makeIcon = (color: string, letter: string) =>
         L.divIcon({
-          html: PIN_SVG(color),
+          html: PIN_SVG(color, letter),
           className: '',
-          iconSize: [28, 36],
-          iconAnchor: [14, 36],
-          popupAnchor: [0, -36],
+          iconSize: [32, 42],
+          iconAnchor: [16, 42],
+          popupAnchor: [0, -42],
         })
 
       const map = L.map(mapRef.current, { zoomControl: true, attributionControl: true })
@@ -115,8 +117,8 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       // Démarrer vue monde puis fly vers la position — effet réaliste
       map.setView([0, 25], 2)
 
-      const redIcon = makeIcon('#D81F26')
-      const blueIcon = makeIcon('#1F6ED8')
+      const redIcon = makeIcon('#D81F26', 'A')
+      const blueIcon = makeIcon('#1F6ED8', 'B')
       const makeYouIcon = () => L.divIcon({
         html: buildYouHereHTML(),
         className: '',
