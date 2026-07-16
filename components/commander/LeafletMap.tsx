@@ -451,7 +451,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       <div
         ref={mapRef}
         className="w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2A2A2C] shadow-sm"
-        style={{ height: '360px' }}
+        style={{ height: '420px' }}
         aria-label="Carte de la course"
       />
     </div>

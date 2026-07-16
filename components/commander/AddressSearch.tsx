@@ -198,7 +198,7 @@ const AddressSearch = forwardRef<AddressSearchHandle, Props>(function AddressSea
           }
           className={bare
             ? 'w-full bg-transparent text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-base leading-normal'
-            : 'w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-[52px] pr-10'
+            : 'w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-gray-300 dark:focus:border-[#3A3A3C] outline-none text-base min-h-[52px] pr-10'
           }
         />
 
