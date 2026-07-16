@@ -47,16 +47,16 @@ export default function ConfirmationScreen(props: Props) {
         </p>
       </div>
 
-      {/* Tracking code */}
-      {props.accessCode && (
-        <div className="w-full bg-brand-black rounded-2xl p-5 text-center">
-          <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-2">Code de suivi</p>
-          <p className="text-white text-4xl font-bold tracking-widest tabular-nums mb-3">
+      {/* Tracking code — masqué pour taxi (pas de suivi), adapté light/dark */}
+      {props.accessCode && props.service !== 'taxi' && (
+        <div className="w-full bg-gray-100 dark:bg-[#0D0D0F] border border-gray-200 dark:border-transparent rounded-2xl p-5 text-center">
+          <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-widest mb-2">Code de suivi</p>
+          <p className="text-brand-black dark:text-white text-4xl font-bold tracking-widest tabular-nums mb-3">
             {props.accessCode}
           </p>
-          <p className="text-gray-500 text-xs leading-relaxed mb-4">
+          <p className="text-gray-500 dark:text-gray-500 text-xs leading-relaxed mb-4">
             Notez ce code. Il vous permet de suivre vos commandes sur{' '}
-            <span className="text-white font-semibold">taxifastservice.mg/suivi</span>
+            <span className="text-brand-black dark:text-white font-semibold">taxifastservice.mg/suivi</span>
           </p>
           <a
             href="/suivi"
