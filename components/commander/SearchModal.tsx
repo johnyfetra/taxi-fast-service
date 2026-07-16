@@ -178,7 +178,7 @@ export default function SearchModal({
                 placeholder={pickupPlaceholder}
                 autoComplete="off"
                 style={{ WebkitTapHighlightColor: 'transparent', WebkitAppearance: 'none', boxShadow: 'none' }}
-                className="flex-1 bg-transparent text-base text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:outline-none appearance-none min-w-0"
+                className="flex-1 bg-transparent text-base text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:outline-none focus-visible:outline-none appearance-none min-w-0"
               />
               {query && (
                 <button
@@ -235,7 +235,7 @@ export default function SearchModal({
                   placeholder={dropoffPlaceholder}
                   autoComplete="off"
                   style={{ WebkitTapHighlightColor: 'transparent', WebkitAppearance: 'none', boxShadow: 'none' }}
-                  className="flex-1 bg-transparent text-base text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:outline-none appearance-none min-w-0"
+                  className="flex-1 bg-transparent text-base text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:outline-none focus-visible:outline-none appearance-none min-w-0"
                 />
                 {query && (
                   <button

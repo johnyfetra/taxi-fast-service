@@ -377,16 +377,23 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       const labelHtml =
         `<div style="position:relative;width:0;height:0">` +
           `<div style="` +
-            `position:absolute;transform:translate(-50%, calc(-100% - 8px));` +
-            `display:flex;align-items:center;gap:7px;white-space:nowrap;` +
-            `background:#D81F26;` +
-            `border-radius:12px;padding:7px 13px;` +
-            `box-shadow:0 4px 20px rgba(216,31,38,0.45);` +
+            `position:absolute;` +
+            `transform:translate(-50%, calc(-100% - 22px));` +
+            `background:rgba(13,13,15,0.9);` +
+            `border-radius:14px;padding:10px 16px;` +
+            `box-shadow:0 6px 24px rgba(0,0,0,0.35);` +
+            `white-space:nowrap;text-align:center;min-width:80px;` +
           `">` +
-            `<span style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.02em">${fmtDur}</span>` +
-            `<span style="width:1px;height:14px;background:rgba(255,255,255,0.35);display:inline-block"></span>` +
-            `<span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85)">${result.distance_km}&nbsp;km</span>` +
+            `<div style="font-size:17px;font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1.15">${fmtDur}</div>` +
+            `<div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.45);margin-top:3px;letter-spacing:0.02em">${result.distance_km}&nbsp;km</div>` +
           `</div>` +
+          `<div style="` +
+            `position:absolute;` +
+            `transform:translate(-50%,-22px);` +
+            `width:2px;height:14px;` +
+            `background:rgba(13,13,15,0.35);` +
+            `border-radius:1px;` +
+          `"></div>` +
         `</div>`
 
       const labelIcon = instance.L.divIcon({
