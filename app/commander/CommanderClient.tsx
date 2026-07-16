@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import type { ServiceType, Location, EstimateResult } from '@/lib/types'
 import ServiceSelector from '@/components/commander/ServiceSelector'
-import AddressSearch, { type AddressSearchHandle } from '@/components/commander/AddressSearch'
+import SearchModal from '@/components/commander/SearchModal'
 import EstimateCard from '@/components/commander/EstimateCard'
 import PriceDecision from '@/components/commander/PriceDecision'
 import ContactForm from '@/components/commander/ContactForm'
@@ -74,7 +74,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
   const [customerName, setCustomerName] = useState('')
   const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null)
   const [userLabel, setUserLabel] = useState<string | null>(null)
-  const dropoffRef = useRef<AddressSearchHandle>(null)
+  const [searchModal, setSearchModal] = useState<{ activeField: 'pickup' | 'dropoff' } | null>(null)
   const prevPickupRef = useRef<Location | null>(null)
   const userPosAskedRef = useRef(false)
 
@@ -100,12 +100,12 @@ export default function CommanderClient({ initialService }: { initialService?: S
     )
   }, [step, service])
 
-  // Auto-focus arrivée dès que le départ est renseigné pour la première fois
+  // Ouvre le modal arrivée dès que le départ est renseigné pour la première fois
   useEffect(() => {
     const wasEmpty = prevPickupRef.current === null
     const isNowSet = pickup !== null
     if (wasEmpty && isNowSet && service !== 'courses' && !dropoff) {
-      setTimeout(() => dropoffRef.current?.focus(), 250)
+      setTimeout(() => setSearchModal({ activeField: 'dropoff' }), 250)
     }
     prevPickupRef.current = pickup
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -321,30 +321,39 @@ export default function CommanderClient({ initialService }: { initialService?: S
             </div>
           )}
 
-          {/* Carte adresses — remonte par-dessus la carte (effet inDrive / Uber) */}
+          {/* Carte adresses — tap pour ouvrir le modal de recherche */}
           {/* z-[1000] : Leaflet utilise jusqu'à 800 pour ses contrôles */}
-          <div className="relative z-[1000] bg-white dark:bg-[#141416] rounded-2xl shadow-lg dark:shadow-black/40 border border-gray-100 dark:border-[#1E1E20] overflow-hidden transition-[border-color,box-shadow] focus-within:border-gray-300 dark:focus-within:border-[#3A3A3C] focus-within:shadow-xl dark:focus-within:shadow-black/50">
+          <div className="relative z-[1000] bg-white dark:bg-[#141416] rounded-2xl shadow-lg dark:shadow-black/40 border border-gray-100 dark:border-[#1E1E20] overflow-hidden">
 
             {/* Ligne Départ */}
             <div className="flex items-center min-h-[56px]">
-              <div className="w-12 flex-shrink-0 flex items-center justify-center">
-                <IconMapPin
-                  size={20}
-                  className={pickup ? 'text-brand-red' : 'text-gray-300 dark:text-gray-600'}
-                />
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Saisir le point de départ"
+                onClick={() => setSearchModal({ activeField: 'pickup' })}
+                onKeyDown={(e) => e.key === 'Enter' && setSearchModal({ activeField: 'pickup' })}
+                className="flex-1 flex items-center min-h-[56px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1A1A1C] active:bg-gray-100 dark:active:bg-[#1E1E20] transition-colors"
+              >
+                <div className="w-12 flex-shrink-0 flex items-center justify-center">
+                  <IconMapPin
+                    size={20}
+                    className={pickup ? 'text-brand-red' : 'text-gray-300 dark:text-gray-600'}
+                  />
+                </div>
+                <div className="flex-1 min-w-0 py-3.5 pr-3">
+                  {pickup ? (
+                    <span className="text-sm font-medium text-brand-black dark:text-white truncate block">{pickup.label}</span>
+                  ) : (
+                    <span className="text-sm text-gray-400 dark:text-gray-500">
+                      {service === 'colis' ? 'Point de récupération' :
+                       service === 'courses' ? 'Adresse de livraison' :
+                       "D'où partez-vous ?"}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0 py-3.5 pr-3">
-                <AddressSearch
-                  bare
-                  placeholder={
-                    service === 'colis' ? 'Point de récupération' :
-                    service === 'courses' ? 'Adresse de livraison' :
-                    "D'où partez-vous ?"
-                  }
-                  value={pickup}
-                  onChange={setPickup}
-                />
-              </div>
+              {/* Bouton géoloc — séparé pour éviter les boutons imbriqués */}
               <div className="flex items-center pr-3.5">
                 <button
                   type="button"
@@ -361,7 +370,6 @@ export default function CommanderClient({ initialService }: { initialService?: S
               </div>
             </div>
 
-
             {/* Erreur géoloc */}
             {geoError && (
               <p role="alert" className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-100 dark:border-amber-800/40 px-4 py-2">
@@ -371,7 +379,14 @@ export default function CommanderClient({ initialService }: { initialService?: S
 
             {/* Ligne Arrivée */}
             {service !== 'courses' && (
-              <div className="flex items-center min-h-[56px] border-t border-gray-100 dark:border-[#1E1E20]">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Saisir la destination"
+                onClick={() => setSearchModal({ activeField: 'dropoff' })}
+                onKeyDown={(e) => e.key === 'Enter' && setSearchModal({ activeField: 'dropoff' })}
+                className="flex items-center min-h-[56px] border-t border-gray-100 dark:border-[#1E1E20] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1A1A1C] active:bg-gray-100 dark:active:bg-[#1E1E20] transition-colors"
+              >
                 <div className="w-12 flex-shrink-0 flex items-center justify-center">
                   <IconMapPin
                     size={20}
@@ -379,20 +394,39 @@ export default function CommanderClient({ initialService }: { initialService?: S
                   />
                 </div>
                 <div className="flex-1 min-w-0 py-3.5 pr-4">
-                  <AddressSearch
-                    ref={dropoffRef}
-                    bare
-                    placeholder={
-                      service === 'colis' ? 'Point de livraison' :
-                      "Où voulez-vous aller ?"
-                    }
-                    value={dropoff}
-                    onChange={setDropoff}
-                  />
+                  {dropoff ? (
+                    <span className="text-sm font-medium text-brand-black dark:text-white truncate block">{dropoff.label}</span>
+                  ) : (
+                    <span className="text-sm text-gray-400 dark:text-gray-500">
+                      {service === 'colis' ? 'Point de livraison' : "Où voulez-vous aller ?"}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
           </div>
+
+          {/* Modal de recherche plein écran */}
+          {searchModal && (
+            <SearchModal
+              activeField={searchModal.activeField}
+              pickup={pickup}
+              dropoff={dropoff}
+              onPickupChange={setPickup}
+              onDropoffChange={setDropoff}
+              onClose={() => setSearchModal(null)}
+              pickupPlaceholder={
+                service === 'colis' ? 'Point de récupération' :
+                service === 'courses' ? 'Adresse de livraison' :
+                "D'où partez-vous ?"
+              }
+              dropoffPlaceholder={
+                service === 'colis' ? 'Point de livraison' :
+                "Où voulez-vous aller ?"
+              }
+              showDropoff={service !== 'courses'}
+            />
+          )}
 
           {/* Options colis */}
           {service === 'colis' && (
