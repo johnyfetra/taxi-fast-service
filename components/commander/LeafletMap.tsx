@@ -381,10 +381,10 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
         routeLayerRef.current = layer
       }
 
-      const dur = Math.max(1, Math.round(result.duration_seconds / 60))
-      const fmtDur = dur >= 60
-        ? `${Math.floor(dur / 60)}h ${dur % 60 > 0 ? `${dur % 60}min` : ''}`
-        : `${dur} min`
+      const durMin = Math.max(5, Math.ceil(result.distance_km / 20 * 60 / 5) * 5)
+      const fmtDur = durMin >= 60
+        ? `${Math.floor(durMin / 60)}h${durMin % 60 > 0 ? ` ${durMin % 60}min` : ''}`
+        : `${durMin} min`
 
       setRouteInfo({ duration: fmtDur, distance: String(result.distance_km) })
     }

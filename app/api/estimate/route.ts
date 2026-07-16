@@ -70,9 +70,7 @@ export async function POST(req: NextRequest) {
       details,
     })
 
-    const duration_min = route.fallback
-      ? Math.max(5, Math.ceil((route.distance_km / 20) / 5) * 5)
-      : calculateDuration(route.duration_seconds)
+    const duration_min = calculateDuration(route.distance_km)
 
     return NextResponse.json({
       distance_km: route.distance_km,

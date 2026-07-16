@@ -86,9 +86,7 @@ export async function POST(req: NextRequest) {
         })
         price_offered = result.price
         distance_km = route.distance_km
-        duration_min = route.fallback
-          ? Math.max(5, Math.ceil((route.distance_km / 20) / 5) * 5)
-          : calculateDuration(route.duration_seconds)
+        duration_min = calculateDuration(route.distance_km)
       }
     } catch (err) {
       console.error('[orders] pricing recalc error:', err)
