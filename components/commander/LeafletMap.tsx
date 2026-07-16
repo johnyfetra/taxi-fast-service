@@ -381,24 +381,37 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   return (
     <div className="relative w-full">
 
-      {/* Pill info trajet — en haut de la carte, rouge/noir/blanc */}
+      {/* Pill info trajet — fond rouge, police moderne, coins peu arrondis */}
       {routeInfo && (
         <div
-          className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2.5 px-4 py-2.5 rounded-2xl pointer-events-none"
+          className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center pointer-events-none"
           style={{
-            background: 'rgba(13,13,15,0.88)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.35)',
+            background: '#D81F26',
+            borderRadius: '10px',
+            boxShadow: '0 6px 28px rgba(216,31,38,0.5)',
             whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            fontFamily: 'system-ui,-apple-system,BlinkMacSystemFont,sans-serif',
           }}
         >
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#D81F26', flexShrink: 0, display: 'inline-block' }} />
-          <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+          {/* Durée */}
+          <span style={{
+            display: 'inline-flex', alignItems: 'center',
+            padding: '11px 18px',
+            fontSize: 18, fontWeight: 900, color: '#fff',
+            letterSpacing: '-0.03em', lineHeight: 1,
+          }}>
             {routeInfo.duration}
           </span>
-          <span style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.2)', flexShrink: 0, display: 'inline-block' }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>
+          {/* Séparateur */}
+          <span style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,0.25)', display: 'inline-block', flexShrink: 0 }} />
+          {/* Distance */}
+          <span style={{
+            display: 'inline-flex', alignItems: 'center',
+            padding: '11px 18px',
+            fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.82)',
+            letterSpacing: '-0.01em', lineHeight: 1,
+          }}>
             {routeInfo.distance} km
           </span>
         </div>
