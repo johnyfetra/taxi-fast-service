@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Location } from '@/lib/types'
 
 interface Props {
@@ -65,6 +65,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const routeControlRef = useRef<any>(null)
   const routeReqRef = useRef(0)
+  const [routeInfo, setRouteInfo] = useState<{ duration: string; distance: string } | null>(null)
   // Guard synchrone pour React StrictMode (double-invocation des effects en dev)
   const initializingRef = useRef(false)
   // Miroir des props pour que initMap() puisse lire les valeurs initiales sans deps
@@ -228,6 +229,9 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
     const instance = mapInstanceRef.current
     if (!instance || !userPosition) return
 
+    // Départ déjà défini → pas besoin du bouton "Partir d'ici"
+    if (pickupRef.current) return
+
     if (userMarkerRef.current) {
       userMarkerRef.current.remove()
       userMarkerRef.current = null
@@ -277,6 +281,9 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
     }
 
     if (pickup) {
+      // Supprimer le marker "Vous ici" dès que le départ est défini
+      if (userMarkerRef.current) { userMarkerRef.current.remove(); userMarkerRef.current = null }
+
       const m = instance.L
         .marker([pickup.lat, pickup.lng], { icon: instance.redIcon, draggable: true })
         .addTo(instance.map)
@@ -332,23 +339,20 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dropoff])
 
-  // Draw route polyline + floating info badge when both pickup and dropoff are set
+  // Draw route polyline — info badge géré en React state (overlay en haut de carte)
   useEffect(() => {
     if (routeLayerRef.current) {
       routeLayerRef.current.remove()
       routeLayerRef.current = null
     }
-    if (routeControlRef.current) {
-      routeControlRef.current.remove()
-      routeControlRef.current = null
-    }
+    setRouteInfo(null)
     if (!pickup || !dropoff) return
 
     const reqId = ++routeReqRef.current
     const drawRoute = async () => {
       const { getRoute } = await import('@/lib/osrm')
       const result = await getRoute(pickup, dropoff)
-      if (routeReqRef.current !== reqId) return // résultat obsolète, une requête plus récente a pris le relais
+      if (routeReqRef.current !== reqId) return
       const instance = mapInstanceRef.current
       if (!instance) return
 
@@ -360,57 +364,10 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
 
       const dur = Math.max(1, Math.round(result.duration_seconds / 60))
       const fmtDur = dur >= 60
-        ? `${Math.floor(dur / 60)}h${dur % 60 > 0 ? `&nbsp;${dur % 60}min` : ''}`
-        : `${dur}&nbsp;min`
+        ? `${Math.floor(dur / 60)}h ${dur % 60 > 0 ? `${dur % 60}min` : ''}`
+        : `${dur} min`
 
-      // Label positionné au milieu du tracé
-      let midLat = (pickup.lat + dropoff.lat) / 2
-      let midLng = (pickup.lng + dropoff.lng) / 2
-      if (result.geometry?.type === 'LineString') {
-        const coords = result.geometry.coordinates as [number, number][]
-        if (coords.length > 0) {
-          const m = coords[Math.floor(coords.length / 2)]
-          midLng = m[0]; midLat = m[1]
-        }
-      }
-
-      const labelHtml =
-        `<div style="position:relative;width:0;height:0">` +
-          `<div style="` +
-            `position:absolute;` +
-            `transform:translate(-50%, calc(-100% - 22px));` +
-            `background:rgba(13,13,15,0.9);` +
-            `border-radius:14px;padding:10px 16px;` +
-            `box-shadow:0 6px 24px rgba(0,0,0,0.35);` +
-            `white-space:nowrap;text-align:center;min-width:80px;` +
-          `">` +
-            `<div style="font-size:17px;font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1.15">${fmtDur}</div>` +
-            `<div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.45);margin-top:3px;letter-spacing:0.02em">${result.distance_km}&nbsp;km</div>` +
-          `</div>` +
-          `<div style="` +
-            `position:absolute;` +
-            `transform:translate(-50%,-22px);` +
-            `width:2px;height:14px;` +
-            `background:rgba(13,13,15,0.35);` +
-            `border-radius:1px;` +
-          `"></div>` +
-        `</div>`
-
-      const labelIcon = instance.L.divIcon({
-        html: labelHtml,
-        className: '',
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
-      })
-
-      const labelMarker = instance.L.marker([midLat, midLng], {
-        icon: labelIcon,
-        interactive: false,
-        keyboard: false,
-        zIndexOffset: 1000,
-      }).addTo(instance.map)
-
-      routeControlRef.current = labelMarker
+      setRouteInfo({ duration: fmtDur, distance: String(result.distance_km) })
     }
 
     drawRoute()
@@ -423,7 +380,32 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
 
   return (
     <div className="relative w-full">
-      {!pickup && (street || district) && (
+
+      {/* Pill info trajet — en haut de la carte, rouge/noir/blanc */}
+      {routeInfo && (
+        <div
+          className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2.5 px-4 py-2.5 rounded-2xl pointer-events-none"
+          style={{
+            background: 'rgba(13,13,15,0.88)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.35)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#D81F26', flexShrink: 0, display: 'inline-block' }} />
+          <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+            {routeInfo.duration}
+          </span>
+          <span style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.2)', flexShrink: 0, display: 'inline-block' }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>
+            {routeInfo.distance} km
+          </span>
+        </div>
+      )}
+
+      {/* Pill position utilisateur — masquée si trajet ou départ défini */}
+      {!routeInfo && !pickup && (street || district) && (
         <div
           className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 px-3.5 py-2 rounded-2xl pointer-events-none"
           style={{
@@ -435,7 +417,6 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
             maxWidth: 'calc(100% - 32px)',
           }}
         >
-          {/* Icône GPS moderne — cercle plein + anneau */}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0" aria-hidden="true">
             <circle cx="12" cy="12" r="4" fill="#3b82f6" />
             <circle cx="12" cy="12" r="8" stroke="#3b82f6" strokeWidth="1.5" opacity="0.3" />
@@ -445,15 +426,9 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
             <line x1="19" y1="12" x2="22" y2="12" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
           <span className="truncate" style={{ maxWidth: '230px', letterSpacing: '-0.01em' }}>
-            {street && (
-              <span className="text-[11.5px] text-gray-500">{street}</span>
-            )}
-            {street && district && (
-              <span className="text-[11.5px] text-gray-400"> · </span>
-            )}
-            {district && (
-              <span className="text-[12px] font-bold text-gray-800">{district}</span>
-            )}
+            {street && <span className="text-[11.5px] text-gray-500">{street}</span>}
+            {street && district && <span className="text-[11.5px] text-gray-400"> · </span>}
+            {district && <span className="text-[12px] font-bold text-gray-800">{district}</span>}
           </span>
         </div>
       )}
