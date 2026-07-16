@@ -407,28 +407,25 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       {/* Pill position utilisateur — masquée si trajet ou départ défini */}
       {!routeInfo && !pickup && (street || district) && (
         <div
-          className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 px-3.5 py-2 rounded-2xl pointer-events-none"
+          className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2.5 px-4 py-2.5 rounded-2xl pointer-events-none"
           style={{
-            background: 'rgba(255,255,255,0.82)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.6)',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.09)',
+            background: '#D81F26',
+            boxShadow: '0 4px 20px rgba(216,31,38,0.45)',
             maxWidth: 'calc(100% - 32px)',
+            whiteSpace: 'nowrap',
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0" aria-hidden="true">
-            <circle cx="12" cy="12" r="4" fill="#3b82f6" />
-            <circle cx="12" cy="12" r="8" stroke="#3b82f6" strokeWidth="1.5" opacity="0.3" />
-            <line x1="12" y1="2" x2="12" y2="5" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
-            <line x1="12" y1="19" x2="12" y2="22" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
-            <line x1="2" y1="12" x2="5" y2="12" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
-            <line x1="19" y1="12" x2="22" y2="12" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round" />
+          {/* Icône personnage moderne */}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white" className="flex-shrink-0" aria-hidden="true">
+            <circle cx="12" cy="7" r="4" />
+            <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8" strokeLinecap="round" />
           </svg>
-          <span className="truncate" style={{ maxWidth: '230px', letterSpacing: '-0.01em' }}>
-            {street && <span className="text-[11.5px] text-gray-500">{street}</span>}
-            {street && district && <span className="text-[11.5px] text-gray-400"> · </span>}
-            {district && <span className="text-[12px] font-bold text-gray-800">{district}</span>}
+          <span className="truncate" style={{ maxWidth: '240px', letterSpacing: '-0.01em' }}>
+            {/* Quartier en gras blanc */}
+            {street && <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{street}</span>}
+            {street && district && <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}> · </span>}
+            {/* Ville en normal, atténué */}
+            {district && <span style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.75)' }}>{district}</span>}
           </span>
         </div>
       )}
