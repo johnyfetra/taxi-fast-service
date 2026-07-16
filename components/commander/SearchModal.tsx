@@ -154,7 +154,7 @@ export default function SearchModal({
           onClick={() => switchActive('pickup')}
           onKeyDown={(e) => e.key === 'Enter' && switchActive('pickup')}
           className={[
-            'flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-colors',
+            'flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer transition-colors',
             active === 'pickup'
               ? 'bg-white dark:bg-[#1C1C1E] border-2 border-brand-black dark:border-white shadow-sm'
               : 'bg-gray-50 dark:bg-[#1E1E20] border border-gray-200 dark:border-[#2A2A2C]',
@@ -166,7 +166,7 @@ export default function SearchModal({
             <circle cx="12" cy="12" r="9" />
           </svg>
 
-          <span className="text-xs font-bold text-gray-400 dark:text-gray-500 w-4 flex-shrink-0">De</span>
+          <span className="text-xs font-bold text-gray-400 dark:text-gray-500 w-5 flex-shrink-0">De</span>
 
           {active === 'pickup' ? (
             <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -177,7 +177,8 @@ export default function SearchModal({
                 onChange={(e) => handleInput(e.target.value)}
                 placeholder={pickupPlaceholder}
                 autoComplete="off"
-                className="flex-1 bg-transparent text-sm text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none min-w-0"
+                style={{ WebkitTapHighlightColor: 'transparent', WebkitAppearance: 'none', boxShadow: 'none' }}
+                className="flex-1 bg-transparent text-base text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:outline-none appearance-none min-w-0"
               />
               {query && (
                 <button
@@ -194,7 +195,7 @@ export default function SearchModal({
             </div>
           ) : (
             <span className={[
-              'flex-1 text-sm truncate',
+              'flex-1 text-base truncate',
               pickup ? 'text-brand-black dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500',
             ].join(' ')}>
               {pickup?.label || pickupPlaceholder}
@@ -211,7 +212,7 @@ export default function SearchModal({
             onClick={() => switchActive('dropoff')}
             onKeyDown={(e) => e.key === 'Enter' && switchActive('dropoff')}
             className={[
-              'flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-colors',
+              'flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer transition-colors',
               active === 'dropoff'
                 ? 'bg-white dark:bg-[#1C1C1E] border-2 border-brand-black dark:border-white shadow-sm'
                 : 'bg-gray-50 dark:bg-[#1E1E20] border border-gray-200 dark:border-[#2A2A2C]',
@@ -222,7 +223,7 @@ export default function SearchModal({
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
             </svg>
 
-            <span className="text-xs font-bold text-gray-400 dark:text-gray-500 w-4 flex-shrink-0">À</span>
+            <span className="text-xs font-bold text-gray-400 dark:text-gray-500 w-5 flex-shrink-0">À</span>
 
             {active === 'dropoff' ? (
               <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -233,7 +234,8 @@ export default function SearchModal({
                   onChange={(e) => handleInput(e.target.value)}
                   placeholder={dropoffPlaceholder}
                   autoComplete="off"
-                  className="flex-1 bg-transparent text-sm text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none min-w-0"
+                  style={{ WebkitTapHighlightColor: 'transparent', WebkitAppearance: 'none', boxShadow: 'none' }}
+                  className="flex-1 bg-transparent text-base text-brand-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:outline-none appearance-none min-w-0"
                 />
                 {query && (
                   <button
@@ -250,7 +252,7 @@ export default function SearchModal({
               </div>
             ) : (
               <span className={[
-                'flex-1 text-sm truncate',
+                'flex-1 text-base truncate',
                 dropoff ? 'text-brand-black dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500',
               ].join(' ')}>
                 {dropoff?.label || dropoffPlaceholder}
