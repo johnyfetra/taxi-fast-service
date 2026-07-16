@@ -5,6 +5,7 @@ import type { ServiceType, Location, EstimateResult } from '@/lib/types'
 import ServiceSelector from '@/components/commander/ServiceSelector'
 import SearchModal from '@/components/commander/SearchModal'
 import EstimateCard from '@/components/commander/EstimateCard'
+import DateTimePicker from '@/components/commander/DateTimePicker'
 import PriceDecision from '@/components/commander/PriceDecision'
 import ContactForm from '@/components/commander/ContactForm'
 import ConfirmationScreen from '@/components/commander/ConfirmationScreen'
@@ -596,12 +597,10 @@ export default function CommanderClient({ initialService }: { initialService?: S
                 ))}
               </div>
               {pickupSchedule === 'later' && (
-                <input
-                  type="datetime-local"
+                <DateTimePicker
                   value={pickupDatetime}
-                  onChange={(e) => setPickupDatetime(e.target.value)}
+                  onChange={setPickupDatetime}
                   min={(() => { const d = new Date(Date.now() + 10 * 60000); const p = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}` })()}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2A2A2C] bg-white dark:bg-[#1C1C1E] text-brand-black dark:text-white focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 outline-none text-base min-h-12 placeholder-gray-400 dark:placeholder-gray-500"
                 />
               )}
             </div>
