@@ -357,9 +357,28 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       if (!instance) return
 
       if (result.geometry) {
-        routeLayerRef.current = instance.L.geoJSON(result.geometry, {
-          style: { color: '#D81F26', weight: 4, opacity: 0.7, lineJoin: 'round', lineCap: 'round' },
+        const layer = instance.L.geoJSON(result.geometry, {
+          style: { color: '#D81F26', weight: 4, opacity: 0.85, lineJoin: 'round', lineCap: 'round' },
         }).addTo(instance.map)
+
+        // Animation stroke-dashoffset : tracé progressif de A → B
+        layer.eachLayer((l: any) => {
+          const el = l.getElement?.() as SVGPathElement | null
+          if (!el) return
+          const len = el.getTotalLength()
+          el.style.strokeDasharray = `${len}`
+          el.style.strokeDashoffset = `${len}`
+          el.style.transition = 'none'
+          // Double rAF : garantit que le state initial est peint avant d'animer
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              el.style.transition = 'stroke-dashoffset 1.6s cubic-bezier(0.4, 0, 0.2, 1)'
+              el.style.strokeDashoffset = '0'
+            })
+          })
+        })
+
+        routeLayerRef.current = layer
       }
 
       const dur = Math.max(1, Math.round(result.duration_seconds / 60))
