@@ -18,9 +18,9 @@ export function roundTo500(n: number): number {
   return Math.ceil(n / 500) * 500
 }
 
-export function calculateDuration(osrmSeconds: number): number {
-  const minutes = (osrmSeconds / 60) * 1.5
-  return Math.ceil(minutes / 5) * 5
+export function calculateDuration(distance_km: number): number {
+  // 20 km/h pessimiste — ignore la durée OSRM (pas fiable pour le trafic de Tana)
+  return Math.max(5, Math.ceil(distance_km / 20 * 60 / 5) * 5)
 }
 
 export function calculatePrice(rule: PricingRule, input: PriceInput): PriceResult {

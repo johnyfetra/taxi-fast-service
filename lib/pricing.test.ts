@@ -94,22 +94,23 @@ describe('calculatePrice — courses', () => {
 })
 
 describe('calculateDuration', () => {
-  it('1200s OSRM → 30 min (1200 × 1.5 / 60 = 30)', () => {
-    expect(calculateDuration(1200)).toBe(30)
+  it('6.67km → 25 min', () => {
+    // 6.67/20*60 = 20.01 → ceil(20.01/5)*5 = ceil(4.002)*5 = 25
+    expect(calculateDuration(6.67)).toBe(25)
   })
 
-  it('1300s → 35 min (arrondi aux 5 min)', () => {
-    // 1300 × 1.5 / 60 = 32.5 → ceil(32.5/5)*5 = ceil(6.5)*5 = 35
-    expect(calculateDuration(1300)).toBe(35)
+  it('10km → 30 min', () => {
+    // 10/20*60 = 30 → ceil(30/5)*5 = 30
+    expect(calculateDuration(10)).toBe(30)
   })
 
-  it('60s → 5 min minimum', () => {
-    // 60 × 1.5 / 60 = 1.5 → ceil(1.5/5)*5 = ceil(0.3)*5 = 5
-    expect(calculateDuration(60)).toBe(5)
+  it('1km → 5 min minimum', () => {
+    // 1/20*60 = 3 → ceil(3/5)*5 = 5
+    expect(calculateDuration(1)).toBe(5)
   })
 
-  it('3600s (1h OSRM) → 90 min', () => {
-    // 3600 × 1.5 / 60 = 90 → 90
-    expect(calculateDuration(3600)).toBe(90)
+  it('31.4km → 95 min', () => {
+    // 31.4/20*60 = 94.2 → ceil(94.2/5)*5 = 95
+    expect(calculateDuration(31.4)).toBe(95)
   })
 })
