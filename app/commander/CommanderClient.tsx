@@ -266,27 +266,34 @@ export default function CommanderClient({ initialService }: { initialService?: S
     (!needsDatetime || !!pickupDatetime)
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6">
-      {/* Step indicator */}
+    <div className="max-w-lg mx-auto px-4 py-3">
+      {/* Step indicator + bouton retour */}
       {step !== 'done' && (
-        <div className="flex items-center gap-2 mb-6">
-          {(['service', 'addresses', 'estimate', 'contact'] as Step[]).map((s, i) => (
-            <div key={s} className="flex items-center gap-2 flex-1">
-              <div
-                className={[
-                  'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
-                  step === s
-                    ? 'bg-brand-red text-white'
-                    : ['service', 'addresses', 'estimate', 'contact'].indexOf(step) > i
-                    ? 'bg-brand-black dark:bg-white text-white dark:text-brand-black'
-                    : 'bg-gray-200 dark:bg-[#2A2A2C] text-gray-500 dark:text-gray-400',
-                ].join(' ')}
-              >
-                {i + 1}
+        <div className="flex items-center gap-3 mb-3">
+          {step === 'addresses' && (
+            <button onClick={() => setStep('service')} className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 whitespace-nowrap flex-shrink-0">
+              ← Service
+            </button>
+          )}
+          <div className="flex items-center gap-2 flex-1">
+            {(['service', 'addresses', 'estimate', 'contact'] as Step[]).map((s, i) => (
+              <div key={s} className="flex items-center gap-2 flex-1">
+                <div
+                  className={[
+                    'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0',
+                    step === s
+                      ? 'bg-brand-red text-white'
+                      : ['service', 'addresses', 'estimate', 'contact'].indexOf(step) > i
+                      ? 'bg-brand-black dark:bg-white text-white dark:text-brand-black'
+                      : 'bg-gray-200 dark:bg-[#2A2A2C] text-gray-500 dark:text-gray-400',
+                  ].join(' ')}
+                >
+                  {i + 1}
+                </div>
+                {i < 3 && <div className={['h-0.5 flex-1', i < ['service', 'addresses', 'estimate', 'contact'].indexOf(step) ? 'bg-brand-black dark:bg-white' : 'bg-gray-200 dark:bg-[#2A2A2C]'].join(' ')} />}
               </div>
-              {i < 3 && <div className={['h-0.5 flex-1', i < ['service', 'addresses', 'estimate', 'contact'].indexOf(step) ? 'bg-brand-black dark:bg-white' : 'bg-gray-200 dark:bg-[#2A2A2C]'].join(' ')} />}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -300,13 +307,7 @@ export default function CommanderClient({ initialService }: { initialService?: S
 
       {/* STEP 2 — Addresses */}
       {step === 'addresses' && service && (
-        <div className="flex flex-col gap-5">
-          <button onClick={() => setStep('service')} className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 self-start">
-            ← Changer de service
-          </button>
-          <h1 className="text-2xl font-black text-brand-black dark:text-white">
-            {service === 'taxi' ? 'Votre trajet' : service === 'colis' ? 'Livraison de colis' : 'Votre commande de courses'}
-          </h1>
+        <div className="flex flex-col gap-3">
 
           {/* Carte toujours visible — centrée sur l'utilisateur dès le départ */}
           {service !== 'courses' && (
