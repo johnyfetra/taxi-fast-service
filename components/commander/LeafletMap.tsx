@@ -12,7 +12,18 @@ interface Props {
 }
 
 const TANA_CENTER: [number, number] = [-18.9137, 47.5361]
-const ZOOM = 13
+const ZOOM = 14
+
+// CartoDB : bien plus lisibles et précis qu'OSM standard, pas d'API key
+const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+const TILE_ATTR  = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
+
+function getIsDark() {
+  return document.documentElement.classList.contains('dark') ||
+    document.documentElement.dataset.theme === 'dark' ||
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+}
 
 // Pin SVG avec lettre — A rouge pour départ, B bleu pour arrivée
 const PIN_SVG = (color: string, letter: string) =>
@@ -64,6 +75,8 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
   const routeLayerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const routeControlRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tileLayerRef = useRef<any>(null)
   const routeReqRef = useRef(0)
   const [routeInfo, setRouteInfo] = useState<{ duration: string; distance: string } | null>(null)
   // Guard synchrone pour React StrictMode (double-invocation des effects en dev)
@@ -108,12 +121,32 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
           popupAnchor: [0, -42],
         })
 
-      const map = L.map(mapRef.current, { zoomControl: true, attributionControl: true })
+      const map = L.map(mapRef.current, {
+        zoomControl: true,
+        attributionControl: true,
+        wheelDebounceTime: 40,
+      })
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-        maxZoom: 19,
+      // Tile layer CartoDB — commutation automatique au changement de thème
+      const tile = L.tileLayer(getIsDark() ? TILE_DARK : TILE_LIGHT, {
+        attribution: TILE_ATTR,
+        subdomains: 'abcd',
+        maxZoom: 20,
       }).addTo(map)
+      tileLayerRef.current = tile
+
+      const themeObserver = new MutationObserver(() => {
+        tileLayerRef.current?.setUrl(getIsDark() ? TILE_DARK : TILE_LIGHT)
+      })
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'data-theme'],
+      })
+      const themeMQ = window.matchMedia('(prefers-color-scheme: dark)')
+      const themeMQHandler = () => {
+        tileLayerRef.current?.setUrl(getIsDark() ? TILE_DARK : TILE_LIGHT)
+      }
+      themeMQ.addEventListener('change', themeMQHandler)
 
       // Démarrer vue monde puis fly vers la position — effet réaliste
       map.setView([0, 25], 2)
@@ -127,13 +160,13 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
         iconAnchor: [60, 60],
       })
 
-      mapInstanceRef.current = { L, map, redIcon, blueIcon, makeYouIcon }
+      mapInstanceRef.current = { L, map, redIcon, blueIcon, makeYouIcon, themeObserver, themeMQ, themeMQHandler }
 
       // Si userPosition déjà connue au moment de l'init, fly avec délai (après rendu)
       const initUserPos = userPositionRef.current
       if (initUserPos && !pickupRef.current && !dropoffRef.current) {
         setTimeout(() => {
-          map.flyTo([initUserPos.lat, initUserPos.lng], 15, { animate: true, duration: 2.2, easeLinearity: 0.12 })
+          map.flyTo([initUserPos.lat, initUserPos.lng], 16, { animate: true, duration: 2.2, easeLinearity: 0.12 })
         }, 300)
         const m = L.marker([initUserPos.lat, initUserPos.lng], {
           icon: makeYouIcon(),
@@ -206,7 +239,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
       if (initPickup && initDropoff) {
         map.fitBounds(
           [[initPickup.lat, initPickup.lng], [initDropoff.lat, initDropoff.lng]],
-          { padding: [48, 48], maxZoom: 16 }
+          { padding: [48, 48], maxZoom: 17 }
         )
       }
     }
@@ -214,7 +247,9 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
     initMap()
 
     return () => {
-      if (mapInstanceRef.current?.map) {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.themeObserver?.disconnect()
+        mapInstanceRef.current.themeMQ?.removeEventListener('change', mapInstanceRef.current.themeMQHandler)
         mapInstanceRef.current.map.remove()
         mapInstanceRef.current = null
       }
@@ -261,7 +296,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
 
     // Fly vers la position — effet monde → local
     if (!pickupRef.current && !dropoffRef.current) {
-      instance.map.flyTo([userPosition.lat, userPosition.lng], 15, {
+      instance.map.flyTo([userPosition.lat, userPosition.lng], 16, {
         animate: true,
         duration: 2.2,
         easeLinearity: 0.12,
@@ -333,7 +368,7 @@ export default function LeafletMap({ pickup, dropoff, onPickupChange, onDropoffC
     if (pickup && dropoff) {
       instance.map.fitBounds(
         [[pickup.lat, pickup.lng], [dropoff.lat, dropoff.lng]],
-        { padding: [48, 48], maxZoom: 16 }
+        { padding: [48, 48], maxZoom: 17 }
       )
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
