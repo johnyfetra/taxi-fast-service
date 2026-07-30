@@ -31,7 +31,6 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
 
 # vercel
 .vercel
@@ -39,3 +38,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Capacitor — generated build artifacts (keep sources)
+android/.gradle/
+android/build/
+android/app/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/.build/
+
+# Icon generation temp
+/tmp/android-icons-backup/
+/tmp/ios-icons-backup/
+config.bat
